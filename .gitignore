@@ -9,6 +9,7 @@ config/env/local.js
 # Node and related ecosystem
 # ==========================
 .nodemonignore
+.tern-project
 .sass-cache/
 npm-debug.log
 node_modules/
