@@ -19,6 +19,7 @@
 	},
 	"dependencies": {
 		"hapi": "~8.6.1",
+    "joi": "6.4.3",
 		"good": "~6.1.4",
 		"good-console": "~5.0.2",
 		"mongodb": "^2.x.x",
