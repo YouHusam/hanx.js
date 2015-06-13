@@ -30,7 +30,18 @@ module.exports = function(db) {
 	server.app.jsFiles = Config.getJavaScriptAssets();
 	server.app.cssFiles = Config.getCSSAssets();
 
-
+	// Register plugins
+	server.register([
+		{
+			register: require('good'),
+			options: {
+				reporters: Logger.getLogReporters()
+			}
+		},
+		{ plugin: require('bell') },
+    { plugin: require('hapi-auth-cookie') },
+    { plugin: require('yar') }
+	]);
 
 	// Set swig as the template engine and views path
 	server.views({
@@ -49,19 +60,6 @@ module.exports = function(db) {
 		}
 	});
 
-	// Register plugins
-	server.register([
-		{
-			register: require('good'),
-			options: {
-				reporters: Logger.getLogReporters()
-			}
-		},
-		{ plugin: require('bell') },
-    { plugin: require('hapi-auth-cookie') },
-    { plugin: require('yar') }
-	]);
-
 	// Setting the app router and static folder
 	server.route({
 		method: 'GET',
@@ -78,28 +76,6 @@ module.exports = function(db) {
 	// Globbing routing files
 	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function(routePath) {
 		require(Path.resolve(routePath))(server);
-	});
-
-	// Assume 'not found' in the error msgs is a 404. this is somewhat silly, but valid, you can do whatever you like, set properties, use instanceof etc.
-	app.use(function(err, req, res, next) {
-		// If the error object doesn't exists
-		if (!err) return next();
-
-		// Log it
-		console.error(err.stack);
-
-		// Error page
-		res.status(500).render('500', {
-			error: err.stack
-		});
-	});
-
-	// Assume 404 since no middleware responded
-	app.use(function(req, res) {
-		res.status(404).render('404', {
-			url: req.originalUrl,
-			error: 'Not Found'
-		});
 	});
 
 	if (process.env.NODE_ENV === 'secure') {
