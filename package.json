@@ -23,6 +23,8 @@
 		"good": "~6.1.4",
 		"good-console": "~5.0.2",
 		"mongodb": "^2.x.x",
+    "hapi-session-mongo":"~3.0.1",
+    "hapi-auth-cookie":"~3.0.0",
 		"yar": "~3.0.3",
 		"swig": "~1.4.2",
 		"hapi-mongo-models": "~2.1.1",
