@@ -3,13 +3,13 @@
 /**
  * Module dependencies.
  */
-var Fs = require('fs'),
-	Http = require('http'),
-	Https = require('https'),
-	Hapi = require('hapi'),
-	Logger = require('./logger'),
-	Config = require('./config'),
-	Path = require('path');
+var Fs 			= require('fs'),
+		Http 		= require('http'),
+		Https 	= require('https'),
+		Hapi 		= require('hapi'),
+		Logger 	= require('./logger'),
+		Config 	= require('./config'),
+		Path 		= require('path');
 
 module.exports = function(db) {
 
@@ -49,13 +49,18 @@ module.exports = function(db) {
 		}
 	});
 
-	// Enable logger (good)
-	server.register({
-		register: require('good'),
-		options: {
-			reporters: Logger.getLogReporters()
-		}
-	});
+	// Register plugins
+	server.register([
+		{
+			register: require('good'),
+			options: {
+				reporters: Logger.getLogReporters()
+			}
+		},
+		{ plugin: require('bell') },
+    { plugin: require('hapi-auth-cookie') },
+    { plugin: require('yar') }
+	]);
 
 	// Setting the app router and static folder
 	server.route({
@@ -70,29 +75,9 @@ module.exports = function(db) {
 		}
 	});
 
-	// Express MongoDB session storage
-	app.use(session({
-		saveUninitialized: true,
-		resave: true,
-		secret: Config.sessionSecret,
-		store: new mongoStore({
-			mongooseConnection: db.connection,
-			collection: Config.sessionCollection
-		}),
-		cookie: Config.sessionCookie,
-		name: Config.sessionName
-	}));
-
-	// use passport session
-	app.use(passport.initialize());
-	app.use(passport.session());
-
-	// connect flash for flash messages
-	app.use(flash());
-
 	// Globbing routing files
 	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function(routePath) {
-		require(path.resolve(routePath))(app);
+		require(Path.resolve(routePath))(server);
 	});
 
 	// Assume 'not found' in the error msgs is a 404. this is somewhat silly, but valid, you can do whatever you like, set properties, use instanceof etc.
@@ -126,12 +111,12 @@ module.exports = function(db) {
 		var httpsServer = Https.createServer({
 			key: privateKey,
 			cert: certificate
-		}, app);
+		}, server);
 
 		// Return HTTPS server instance
 		return httpsServer;
 	}
 
 	// Return Express server instance
-	return app;
+	return server;
 };
