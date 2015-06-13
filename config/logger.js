@@ -4,33 +4,33 @@
  * Module dependencies.
  */
 
-var morgan = require('morgan');
-var config = require('./config');
-var fs = require('fs');
+var Config = require('./config');
 
 /**
  * Module init function.
  */
 module.exports = {
 
-	getLogFormat: function() {
-		return config.log.format;
-	},
+	getLogReporters: function() {
 
-	getLogOptions: function() {
-		var options = {};
+		var reporters = [];
 
-		try {
-			if ('stream' in config.log.options) {
-				options = {
-					stream: fs.createWriteStream(process.cwd() + '/' + config.log.options.stream, {flags: 'a'})
-				};
-			}
-		} catch (e) {
-			options = {};
+		if ('console' in Config.log.options || Config.log.options === {}){
+			reporters.push({
+				reporter: require('good-console'),
+				events: { response: '*' }
+			});
 		}
 
-		return options;
+		if ('stream' in Config.log.options) {
+			reporters.push({
+				reporter: require('good-file'),
+				events: { response: '*' },
+				config: process.cwd() + '/' + Config.log.options.stream
+			});
+		}
+
+		return reporters;
 	}
 
 };

@@ -3,112 +3,84 @@
 /**
  * Module dependencies.
  */
-var fs = require('fs'),
-	http = require('http'),
-	https = require('https'),
-	express = require('express'),
-	morgan = require('morgan'),
-	logger = require('./logger'),
-	bodyParser = require('body-parser'),
-	session = require('express-session'),
-	compression = require('compression'),
-	methodOverride = require('method-override'),
-	cookieParser = require('cookie-parser'),
-	helmet = require('helmet'),
-	passport = require('passport'),
-	mongoStore = require('connect-mongo')({
-		session: session
-	}),
-	flash = require('connect-flash'),
-	config = require('./config'),
-	consolidate = require('consolidate'),
-	path = require('path');
+var Fs = require('fs'),
+	Http = require('http'),
+	Https = require('https'),
+	Hapi = require('hapi'),
+	Logger = require('./logger'),
+	Config = require('./config'),
+	Path = require('path');
 
 module.exports = function(db) {
-	// Initialize express app
-	var app = express();
+
+	// Initialize hapi app
+	var server = new Hapi.Server();
+	server.connection({port: Config.port});
 
 	// Globbing model files
-	config.getGlobbedFiles('./app/models/**/*.js').forEach(function(modelPath) {
-		require(path.resolve(modelPath));
+	Config.getGlobbedFiles('./app/models/**/*.js').forEach(function(modelPath) {
+		require(Path.resolve(modelPath));
 	});
 
 	// Setting application local variables
-	app.locals.title = config.app.title;
-	app.locals.description = config.app.description;
-	app.locals.keywords = config.app.keywords;
-	app.locals.facebookAppId = config.facebook.clientID;
-	app.locals.jsFiles = config.getJavaScriptAssets();
-	app.locals.cssFiles = config.getCSSAssets();
+	server.app.title = Config.app.title;
+	server.app.description = Config.app.description;
+	server.app.keywords = Config.app.keywords;
+	server.app.facebookAppId = Config.facebook.clientID;
+	server.app.jsFiles = Config.getJavaScriptAssets();
+	server.app.cssFiles = Config.getCSSAssets();
 
-	// Passing the request url to environment locals
-	app.use(function(req, res, next) {
-		res.locals.url = req.protocol + '://' + req.headers.host + req.url;
-		next();
+
+
+	// Set swig as the template engine and views path
+	server.views({
+		engines: {
+			'server.view.html': require('swig')
+		},
+		path: './app/views',
+		isCached: function() {
+			if (process.env.NODE_ENV === 'development') {
+				// Disable views cache
+				return false;
+			} else if (process.env.NODE_ENV === 'production') {
+				return true;
+			}
+			return true;
+		}
 	});
 
-	// Should be placed before express.static
-	app.use(compression({
-		// only compress files for the following content types
-		filter: function(req, res) {
-			return (/json|text|javascript|css/).test(res.getHeader('Content-Type'));
-		},
-		// zlib option for compression level
-		level: 3
-	}));
-
-	// Showing stack errors
-	app.set('showStackError', true);
-
-	// Set swig as the template engine
-	app.engine('server.view.html', consolidate[config.templateEngine]);
-
-	// Set views path and view engine
-	app.set('view engine', 'server.view.html');
-	app.set('views', './app/views');
-
-	// Enable logger (morgan)
-	app.use(morgan(logger.getLogFormat(), logger.getLogOptions()));
-
-	// Environment dependent middleware
-	if (process.env.NODE_ENV === 'development') {
-		// Disable views cache
-		app.set('view cache', false);
-	} else if (process.env.NODE_ENV === 'production') {
-		app.locals.cache = 'memory';
-	}
-
-	// Request body parsing middleware should be above methodOverride
-	app.use(bodyParser.urlencoded({
-		extended: true
-	}));
-	app.use(bodyParser.json());
-	app.use(methodOverride());
-
-	// Use helmet to secure Express headers
-	app.use(helmet.xframe());
-	app.use(helmet.xssFilter());
-	app.use(helmet.nosniff());
-	app.use(helmet.ienoopen());
-	app.disable('x-powered-by');
+	// Enable logger (good)
+	server.register({
+		register: require('good'),
+		options: {
+			reporters: Logger.getLogReporters()
+		}
+	});
 
 	// Setting the app router and static folder
-	app.use(express.static(path.resolve('./public')));
-
-	// CookieParser should be above session
-	app.use(cookieParser());
+	server.route({
+		method: 'GET',
+		path: '/{path*}',
+		handler: {
+	 		directory: {
+				path: Path.resolve('./public'),
+				listing: false,
+				index: true
+			}
+		}
+	});
 
 	// Express MongoDB session storage
 	app.use(session({
 		saveUninitialized: true,
 		resave: true,
-		secret: config.sessionSecret,
+		secret: Config.sessionSecret,
 		store: new mongoStore({
 			mongooseConnection: db.connection,
-			collection: config.sessionCollection
+			collection: Config.sessionCollection
 		}),
-		cookie: config.sessionCookie,
-		name: config.sessionName
+		cookie: Config.sessionCookie,
+		name: Config.sessionName
 	}));
 
 	// use passport session
@@ -119,7 +91,7 @@ module.exports = function(db) {
 	app.use(flash());
 
 	// Globbing routing files
-	config.getGlobbedFiles('./app/routes/**/*.js').forEach(function(routePath) {
+	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function(routePath) {
 		require(path.resolve(routePath))(app);
 	});
 
@@ -147,11 +119,11 @@ module.exports = function(db) {
 
 	if (process.env.NODE_ENV === 'secure') {
 		// Load SSL key and certificate
-		var privateKey = fs.readFileSync('./config/sslcerts/key.pem', 'utf8');
-		var certificate = fs.readFileSync('./config/sslcerts/cert.pem', 'utf8');
+		var privateKey = Fs.readFileSync('./config/sslcerts/key.pem', 'utf8');
+		var certificate = Fs.readFileSync('./config/sslcerts/cert.pem', 'utf8');
 
 		// Create HTTPS Server
-		var httpsServer = https.createServer({
+		var httpsServer = Https.createServer({
 			key: privateKey,
 			cert: certificate
 		}, app);
