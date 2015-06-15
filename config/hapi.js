@@ -38,10 +38,14 @@ module.exports = function(db) {
 				reporters: Logger.getLogReporters()
 			}
 		},
-		{ plugin: require('bell') },
-    { plugin: require('hapi-auth-cookie') },
-    { plugin: require('yar') }
-	]);
+		{ register: require('bell') },
+    { register: require('hapi-auth-cookie') },
+    { register: require('yar') }
+	], function(err) {
+		if (err) {
+			console.error(err);
+		}
+	});
 
 	// Set swig as the template engine and views path
 	server.views({
@@ -85,6 +89,6 @@ module.exports = function(db) {
 		return httpsServer;
 	}
 
-	// Return Express server instance
+	// Return Hapi server instance
 	return server;
 };

@@ -2,10 +2,10 @@
 /**
  * Module dependencies.
  */
-var init = require('./config/init')(),
-	config = require('./config/config'),
-	mongoose = require('mongoose'),
-	chalk = require('chalk');
+var Init = require('./config/init')(),
+	Config = require('./config/config'),
+	Mongoose = require('mongoose'),
+	Chalk = require('chalk');
 
 /**
  * Main application entry file.
@@ -13,37 +13,37 @@ var init = require('./config/init')(),
  */
 
 // Bootstrap db connection
-var db = mongoose.connect(config.db.uri, config.db.options, function(err) {
+var db = Mongoose.connect(Config.db.uri, Config.db.options, function(err) {
 	if (err) {
-		console.error(chalk.red('Could not connect to MongoDB!'));
-		console.log(chalk.red(err));
+		console.error(Chalk.red('Could not connect to MongoDB!'));
+		console.log(Chalk.red(err));
 	}
 });
-mongoose.connection.on('error', function(err) {
-	console.error(chalk.red('MongoDB connection error: ' + err));
+Mongoose.connection.on('error', function(err) {
+	console.error(Chalk.red('MongoDB connection error: ' + err));
 	process.exit(-1);
 	}
 );
 
 // Init the express application
-var app = require('./config/hapi')(db);
+var server = require('./config/hapi')(db);
 
 // Bootstrap passport config
 require('./config/passport')();
 
-// Start the app by listening on <port>
-app.start();
+// Start the server by listening on <port>
+server.start();
 
-// Expose app
-exports = module.exports = app;
+// Expose server
+exports = module.exports = server;
 
 // Logging initialization
 console.log('--');
-console.log(chalk.green(config.app.title + ' application started'));
-console.log(chalk.green('Environment:\t\t\t' + process.env.NODE_ENV));
-console.log(chalk.green('Port:\t\t\t\t' + config.port));
-console.log(chalk.green('Database:\t\t\t' + config.db.uri));
+console.log(Chalk.green(Config.app.title + ' application started'));
+console.log(Chalk.green('Environment:\t\t\t' + process.env.NODE_ENV));
+console.log(Chalk.green('Port:\t\t\t\t' + Config.port));
+console.log(Chalk.green('Database:\t\t\t' + Config.db.uri));
 if (process.env.NODE_ENV === 'secure') {
-	console.log(chalk.green('HTTPs:\t\t\t\ton'));
+	console.log(Chalk.green('HTTPs:\t\t\t\ton'));
 }
 console.log('--');
