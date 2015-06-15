@@ -49,15 +49,7 @@ module.exports = function(db) {
 			'server.view.html': require('swig')
 		},
 		path: './app/views',
-		isCached: function() {
-			if (process.env.NODE_ENV === 'development') {
-				// Disable views cache
-				return false;
-			} else if (process.env.NODE_ENV === 'production') {
-				return true;
-			}
-			return true;
-		}
+		isCached: process.env.NODE_ENV === 'development' ? false : true
 	});
 
 	// Setting the app router and static folder

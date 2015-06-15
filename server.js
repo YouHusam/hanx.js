@@ -26,13 +26,13 @@ mongoose.connection.on('error', function(err) {
 );
 
 // Init the express application
-var app = require('./config/express')(db);
+var app = require('./config/hapi')(db);
 
 // Bootstrap passport config
 require('./config/passport')();
 
 // Start the app by listening on <port>
-app.listen(config.port);
+app.start();
 
 // Expose app
 exports = module.exports = app;
