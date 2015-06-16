@@ -3,9 +3,9 @@
 /**
  * Module dependencies.
  */
-exports.index = function(req, res) {
-	res.render('index', {
-		user: req.user || null,
-		request: req
-	});
+exports.index = function(request, reply) {
+  reply.view('index', {
+    user: request.user || null,
+    request: request
+  });
 };

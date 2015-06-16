@@ -3,20 +3,38 @@
 /**
  * Module dependencies.
  */
-var users = require('../../app/controllers/users.server.controller'),
-	articles = require('../../app/controllers/articles.server.controller');
+var Users = require('../../app/controllers/users.server.controller'),
+	Articles = require('../../app/controllers/articles.server.controller');
 
-module.exports = function(app) {
+module.exports = function(server) {
 	// Article Routes
-	app.route('/articles')
-		.get(articles.list)
-		.post(users.requiresLogin, articles.create);
+	server.route([{
+			path: '/articles',
+			method: 'GET',
+			handler: Articles.list
+		},
+		{
+			path: '/articles',
+			method: 'POST',
+			config: {
+				pre: [{method: Users.requiresLogin}],
+				handler: Articles.create
+			}
+		},
+		{
+			path: '/articles/{articleId}',
+			method: 'GET',
+			handler: Articles.read
+		}
+		]);
 
+
+/*
 	app.route('/articles/:articleId')
 		.get(articles.read)
 		.put(users.requiresLogin, articles.hasAuthorization, articles.update)
 		.delete(users.requiresLogin, articles.hasAuthorization, articles.delete);
 
 	// Finish by binding the article middleware
-	app.param('articleId', articles.articleByID);
+	server.param('articleId', Articles.articleByID);*/
 };

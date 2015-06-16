@@ -22,14 +22,6 @@ module.exports = function(db) {
 		require(Path.resolve(modelPath));
 	});
 
-	// Setting application local variables
-	server.app.title = Config.app.title;
-	server.app.description = Config.app.description;
-	server.app.keywords = Config.app.keywords;
-	server.app.facebookAppId = Config.facebook.clientID;
-	server.app.jsFiles = Config.getJavaScriptAssets();
-	server.app.cssFiles = Config.getCSSAssets();
-
 	// Register plugins
 	server.register([
 		{
@@ -40,7 +32,7 @@ module.exports = function(db) {
 		},
 		{ register: require('bell') },
     { register: require('hapi-auth-cookie') },
-    { register: require('yar') }
+    // { register: require('yar') }
 	], function(err) {
 		if (err) {
 			console.error(err);
@@ -53,7 +45,15 @@ module.exports = function(db) {
 			'server.view.html': require('swig')
 		},
 		path: './app/views',
-		isCached: process.env.NODE_ENV === 'development' ? false : true
+		isCached: process.env.NODE_ENV === 'development' ? false : true,
+		context: {
+			title: Config.app.title,
+			description: Config.app.description,
+			keywords: Config.app.keywords,
+			facebookAppId: Config.facebook.clientID,
+			jsFiles: Config.getJavaScriptAssets(),
+			cssFiles: Config.getCSSAssets()
+		}
 	});
 
 	// Setting the app router and static folder
