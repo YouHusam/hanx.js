@@ -31,8 +31,8 @@ module.exports = function(db) {
 			}
 		},
 		{ register: require('bell') },
-    { register: require('hapi-auth-cookie') },
-    // { register: require('yar') }
+		{ register: require('hapi-auth-cookie') },
+		// { register: require('yar') }
 	], function(err) {
 		if (err) {
 			console.error(err);
@@ -58,6 +58,7 @@ module.exports = function(db) {
 
 	// Handle extra slashes in the end of URLs
 	server.ext('onRequest', function (request, reply) {
+
 		if (request.path !== '/' && request.path[request.path.length - 1] === '/') {
 			request.path = request.path.slice(0,-1);
 		}
@@ -80,6 +81,18 @@ module.exports = function(db) {
 	// Globbing routing files
 	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function(routePath) {
 		require(Path.resolve(routePath))(server);
+	});
+
+	// Hande 404 and 500 errors
+	server.ext('onPreResponse', function (request, reply) {
+
+		if (request.response.isBoom) {
+			if(request.response.output.statusCode === 404)
+				return reply.view('404');
+			if(request.response.output.statusCode === 500)
+				return reply.view('500');
+		}
+		return reply.continue();
 	});
 
 	if (process.env.NODE_ENV === 'secure') {

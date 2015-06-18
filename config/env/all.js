@@ -2,15 +2,15 @@
 
 module.exports = {
 	app: {
-		title: 'MEAN.JS',
-		description: 'Full-Stack JavaScript with MongoDB, Express, AngularJS, and Node.js',
-		keywords: 'mongodb, express, angularjs, node.js, mongoose, passport'
+		title: 'HAMN.JS',
+		description: 'Full-Stack JavaScript with MongoDB, HAPI, AngularJS, and Node.js',
+		keywords: 'mongodb, HAPI, angularjs, node.js, mongoose, passport'
 	},
 	port: process.env.PORT || 3000,
 	templateEngine: 'swig',
 	// The secret should be set to a non-guessable string that
 	// is used to compute a session hash
-	sessionSecret: 'MEAN',
+	sessionSecret: 'HAPI',
 	// The name of the MongoDB collection to store sessions in
 	sessionCollection: 'sessions',
 	// The session cookie settings
