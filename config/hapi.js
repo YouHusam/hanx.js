@@ -83,14 +83,14 @@ module.exports = function(db) {
 		require(Path.resolve(routePath))(server);
 	});
 
-	// Hande 404 and 500 errors
+	// Hande 404 errors
 	server.ext('onPreResponse', function (request, reply) {
 
 		if (request.response.isBoom) {
 			if(request.response.output.statusCode === 404)
-				return reply.view('404');
-			if(request.response.output.statusCode === 500)
-				return reply.view('500');
+				return reply.view('404', {
+					url: request.url.path
+				});
 		}
 		return reply.continue();
 	});
