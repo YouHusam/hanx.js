@@ -5,53 +5,135 @@
  */
 var passport = require('passport');
 
-module.exports = function(app) {
+module.exports = function(server) {
 	// User Routes
 	var users = require('../../app/controllers/users.server.controller');
 
+	server.route([
+
 	// Setting up the users profile api
-	app.route('/users/me').get(users.me);
-	app.route('/users').put(users.update);
-	app.route('/users/accounts').delete(users.removeOAuthProvider);
+	{
+		path: '/users/me',
+		method: 'GET',
+		handler: users.me
+	},
+	{
+		path: '/users',
+		method: 'PUT',
+		handler: users.update
+	},
+	{
+		path: '/users/accounts',
+		method: 'DELETE',
+		handler: users.removeOAuthProvider
+	},
 
 	// Setting up the users password api
-	app.route('/users/password').post(users.changePassword);
-	app.route('/auth/forgot').post(users.forgot);
-	app.route('/auth/reset/:token').get(users.validateResetToken);
-	app.route('/auth/reset/:token').post(users.reset);
+	{
+		path: '/users/password',
+		method: 'POST',
+		handler: users.changePassword
+	},
+	{
+		path: '/auth/forgot',
+		method: 'POST',
+		handler: users.forgot
+	},
+	{
+		path: '/auth/reset/{token}',
+		method: 'GET',
+		handler: users.validateResetToken
+	},
+	{
+		path: '/auth/reset/{token}',
+		method: 'POST',
+		handler: users.reset
+	},
 
 	// Setting up the users authentication api
-	app.route('/auth/signup').post(users.signup);
-	app.route('/auth/signin').post(users.signin);
-	app.route('/auth/signout').get(users.signout);
+	{
+		path: '/auth/signup',
+		method: 'POST',
+		handler: users.signup
+	},
+	{
+		path: '/auth/signin',
+		method: 'POST',
+		handler: users.signin
+	},
+	{
+		path: '/auth/signout',
+		method: 'GET',
+		handler: users.signout
+	},
 
 	// Setting the facebook oauth routes
-	app.route('/auth/facebook').get(passport.authenticate('facebook', {
-		scope: ['email']
-	}));
-	app.route('/auth/facebook/callback').get(users.oauthCallback('facebook'));
+	{
+		path: '/auth/facebook',
+		method: 'GET',
+		handler:
+			passport.authenticate('facebook', {
+				scope: ['email']
+			})
+	},
+	{
+		path: '/auth/facebook/callback',
+		method: 'GET',
+		handler: users.oauthCallback('facebook')
+	},
 
 	// Setting the twitter oauth routes
-	app.route('/auth/twitter').get(passport.authenticate('twitter'));
-	app.route('/auth/twitter/callback').get(users.oauthCallback('twitter'));
+	{
+		path: '/auth/twitter',
+		method: 'GET',
+		handler: passport.authenticate('twitter')
+	},
+	{
+		path: '/auth/twitter/callback',
+		method: 'GET',
+		handler: users.oauthCallback('twitter')
+	},
 
 	// Setting the google oauth routes
-	app.route('/auth/google').get(passport.authenticate('google', {
-		scope: [
-			'https://www.googleapis.com/auth/userinfo.profile',
-			'https://www.googleapis.com/auth/userinfo.email'
-		]
-	}));
-	app.route('/auth/google/callback').get(users.oauthCallback('google'));
+	{
+		path: '/auth/google',
+		method: 'GET',
+		handler:
+			passport.authenticate('google', {
+				scope: [
+					'https://www.googleapis.com/auth/userinfo.profile',
+					'https://www.googleapis.com/auth/userinfo.email'
+				]
+		})
+	},
+	{
+		path: '/auth/google/callback',
+		method: 'GET',
+		handler: users.oauthCallback('google')
+	},
 
 	// Setting the linkedin oauth routes
-	app.route('/auth/linkedin').get(passport.authenticate('linkedin'));
-	app.route('/auth/linkedin/callback').get(users.oauthCallback('linkedin'));
+	{
+		path: '/auth/linkedin',
+		method: 'GET',
+		handler: passport.authenticate('linkedin')
+	},
+	{
+		path: '/auth/linkedin/callback',
+		method: 'GET',
+		handler: users.oauthCallback('linkedin')
+	},
 
 	// Setting the github oauth routes
-	app.route('/auth/github').get(passport.authenticate('github'));
-	app.route('/auth/github/callback').get(users.oauthCallback('github'));
-
-	// Finish by binding the user middleware
-	app.param('userId', users.userByID);
+	{
+		path: '/auth/github',
+		method: 'GET',
+		handler: passport.authenticate('github')
+	},
+	{
+		path: '/auth/github/callback',
+		method: 'GET',
+		handler: users.oauthCallback('github')
+	}
+	]);
 };
