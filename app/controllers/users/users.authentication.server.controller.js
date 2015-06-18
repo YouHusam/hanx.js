@@ -4,20 +4,22 @@
  * Module dependencies.
  */
 var _ = require('lodash'),
-	errorHandler = require('../errors.server.controller'),
-	mongoose = require('mongoose'),
-	passport = require('passport'),
-	User = mongoose.model('User');
+	Boom = require('boom'),
+	Errorhandler = require('../errors.server.controller'),
+	Mongoose = require('mongoose'),
+	Passport = require('passport'),
+	User = Mongoose.model('User');
 
 /**
  * Signup
  */
-exports.signup = function(req, res) {
-	// For security measurement we remove the roles from the req.body object
-	delete req.body.roles;
+exports.signup = function(request, reply) {
+
+	// For security measurement we remove the roles from the request.body object
+	delete request.payload.roles;
 
 	// Init Variables
-	var user = new User(req.body);
+	var user = new User(request.payload);
 	var message = null;
 
 	// Add missing user fields
@@ -27,19 +29,17 @@ exports.signup = function(req, res) {
 	// Then save the user
 	user.save(function(err) {
 		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
+			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 		} else {
 			// Remove sensitive data before login
 			user.password = undefined;
 			user.salt = undefined;
 
-			req.login(user, function(err) {
+			request.login(user, function(err) {
 				if (err) {
-					res.status(400).send(err);
+					reply(Boom.badRequest(err));
 				} else {
-					res.json(user);
+					reply(user);
 				}
 			});
 		}
@@ -49,59 +49,63 @@ exports.signup = function(req, res) {
 /**
  * Signin after passport authentication
  */
-exports.signin = function(req, res, next) {
-	passport.authenticate('local', function(err, user, info) {
+exports.signin = function(request, reply, next) {
+
+	Passport.authenticate('local', function(err, user, info) {
 		if (err || !user) {
-			res.status(400).send(info);
+			reply(Boom.badRequest(info));
 		} else {
 			// Remove sensitive data before login
 			user.password = undefined;
 			user.salt = undefined;
 
-			req.login(user, function(err) {
+			request.login(user, function(err) {
 				if (err) {
-					res.status(400).send(err);
+					reply(Boom.badRequest(err));
 				} else {
-					res.json(user);
+					reply(user);
 				}
 			});
 		}
-	})(req, res, next);
+	})(request, reply, next);
 };
 
 /**
  * Signout
  */
-exports.signout = function(req, res) {
-	req.logout();
-	res.redirect('/');
+exports.signout = function(request, reply) {
+
+	request.logout();
+	reply.redirect('/');
 };
 
 /**
  * OAuth callback
  */
 exports.oauthCallback = function(strategy) {
-	return function(req, res, next) {
-		passport.authenticate(strategy, function(err, user, redirectURL) {
+
+	return function(request, reply, next) {
+		Passport.authenticate(strategy, function(err, user, redirectURL) {
 			if (err || !user) {
-				return res.redirect('/#!/signin');
+				return reply.redirect('/#!/signin');
 			}
-			req.login(user, function(err) {
+			request.login(user, function(err) {
 				if (err) {
-					return res.redirect('/#!/signin');
+					return reply.redirect('/#!/signin');
 				}
 
-				return res.redirect(redirectURL || '/');
+				return reply.redirect(redirectURL || '/');
 			});
-		})(req, res, next);
+		})(request, reply, next);
 	};
 };
 
 /**
  * Helper function to save or update a OAuth user profile
  */
-exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
-	if (!req.user) {
+exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
+
+	if (!request.payload.user) {
 		// Define a search query fields
 		var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
 		var searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;
@@ -150,7 +154,7 @@ exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
 		});
 	} else {
 		// User is already logged in, join the provider data to the existing user
-		var user = req.user;
+		var user = request.payload.user;
 
 		// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
 		if (user.provider !== providerUserProfile.provider && (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
@@ -174,9 +178,10 @@ exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
 /**
  * Remove OAuth provider
  */
-exports.removeOAuthProvider = function(req, res, next) {
-	var user = req.user;
-	var provider = req.param('provider');
+exports.removeOAuthProvider = function(request, reply, next) {
+
+	var user = request.payload.user;
+	var provider = request.params.provider;
 
 	if (user && provider) {
 		// Delete the additional provider
@@ -189,15 +194,13 @@ exports.removeOAuthProvider = function(req, res, next) {
 
 		user.save(function(err) {
 			if (err) {
-				return res.status(400).send({
-					message: errorHandler.getErrorMessage(err)
-				});
+				return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 			} else {
-				req.login(user, function(err) {
+				request.login(user, function(err) {
 					if (err) {
-						res.status(400).send(err);
+						reply(Boom.badRequest(err));
 					} else {
-						res.json(user);
+						reply(user);
 					}
 				});
 			}

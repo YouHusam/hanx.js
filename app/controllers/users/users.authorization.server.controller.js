@@ -4,32 +4,33 @@
  * Module dependencies.
  */
 var _ = require('lodash'),
-	mongoose = require('mongoose'),
-	User = mongoose.model('User');
+	Boom = require('boom'),
+	Mongoose = require('mongoose'),
+	User = Mongoose.model('User');
 
 /**
  * User middleware
  */
-exports.userByID = function(req, res, next, id) {
+exports.userByID = function(request, reply) {
+
+	var id = request.payload.id;
 	User.findById(id).exec(function(err, user) {
-		if (err) return next(err);
-		if (!user) return next(new Error('Failed to load User ' + id));
-		req.profile = user;
-		next();
+		if (err) return reply(err);
+		if (!user) return reply(new Error('Failed to load User ' + id));
+		request.profile = user;
+		reply.continue();
 	});
 };
 
 /**
  * Require login routing middleware
  */
-exports.requiresLogin = function(req, res, next) {
-	if (!req.isAuthenticated()) {
-		return res.status(401).send({
-			message: 'User is not logged in'
-		});
-	}
+exports.requiresLogin = function(request, reply) {
 
-	next();
+	if (!request.isAuthenticated()) {
+		return reply(Boom.unauthorized('User is not logged in'));
+	}
+	reply.continue();
 };
 
 /**
@@ -38,14 +39,12 @@ exports.requiresLogin = function(req, res, next) {
 exports.hasAuthorization = function(roles) {
 	var _this = this;
 
-	return function(req, res, next) {
-		_this.requiresLogin(req, res, function() {
-			if (_.intersection(req.user.roles, roles).length) {
-				return next();
+	return function(request, reply) {
+		_this.requireplyLogin(request, reply, function() {
+			if (_.intersection(request.payload.user.roles, roles).length) {
+				return reply.continue();
 			} else {
-				return res.status(403).send({
-					message: 'User is not authorized'
-				});
+				return reply(Boom.forbidden('User is not authorized'));
 			}
 		});
 	};

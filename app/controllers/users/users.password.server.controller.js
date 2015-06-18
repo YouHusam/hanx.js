@@ -4,43 +4,44 @@
  * Module dependencies.
  */
 var _ = require('lodash'),
-	errorHandler = require('../errors.server.controller'),
-	mongoose = require('mongoose'),
-	passport = require('passport'),
-	User = mongoose.model('User'),
-	config = require('../../../config/config'),
-	nodemailer = require('nodemailer'),
-	async = require('async'),
-	crypto = require('crypto');
+	Boom = require('boom'),
+	Errorhandler = require('../errors.server.controller'),
+	Mongoose = require('mongoose'),
+	Passport = require('passport'),
+	User = Mongoose.model('User'),
+	Config = require('../../../config/config'),
+	Nodemailer = require('nodemailer'),
+	Async = require('async'),
+	Crypto = require('crypto');
 
-var smtpTransport = nodemailer.createTransport(config.mailer.options);
+var smtpTransport = Nodemailer.createTransport(Config.mailer.options);
 
 /**
  * Forgot for reset password (forgot POST)
  */
-exports.forgot = function(req, res, next) {
-	async.waterfall([
+exports.forgot = function(request, reply, next) {
+
+	Async.waterfall([
 		// Generate random token
 		function(done) {
-			crypto.randomBytes(20, function(err, buffer) {
+
+			Crypto.randomBytes(20, function(err, buffer) {
 				var token = buffer.toString('hex');
 				done(err, token);
 			});
 		},
 		// Lookup user by username
 		function(token, done) {
-			if (req.body.username) {
+
+			if (request.payload.username) {
 				User.findOne({
-					username: req.body.username
+					username: request.payload.username
 				}, '-salt -password', function(err, user) {
+
 					if (!user) {
-						return res.status(400).send({
-							message: 'No account with that username has been found'
-						});
+						return reply(Boom.BadRequest('No account with that username has been found'));
 					} else if (user.provider !== 'local') {
-						return res.status(400).send({
-							message: 'It seems like you signed up using your ' + user.provider + ' account'
-						});
+						return reply(Boom.BadRequest('It seems like you signed up using your ' + user.provider + ' account'));
 					} else {
 						user.resetPasswordToken = token;
 						user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
@@ -51,77 +52,76 @@ exports.forgot = function(req, res, next) {
 					}
 				});
 			} else {
-				return res.status(400).send({
-					message: 'Username field must not be blank'
-				});
+				return reply(Boom.BadRequest('Username field must not be blank'));
 			}
 		},
 		function(token, user, done) {
-			res.render('templates/reset-password-email', {
+
+			request.server.render('templates/reset-password-email', {
 				name: user.displayName,
-				appName: config.app.title,
-				url: 'http://' + req.headers.host + '/auth/reset/' + token
+				appName: Config.app.title,
+				url: 'http://' + request.headers.host + '/auth/reset/' + token
 			}, function(err, emailHTML) {
 				done(err, emailHTML, user);
 			});
 		},
 		// If valid email, send reset email using service
 		function(emailHTML, user, done) {
+
 			var mailOptions = {
 				to: user.email,
-				from: config.mailer.from,
+				from: Config.mailer.from,
 				subject: 'Password Reset',
 				html: emailHTML
 			};
 			smtpTransport.sendMail(mailOptions, function(err) {
+
 				if (!err) {
-					res.send({
-						message: 'An email has been sent to ' + user.email + ' with further instructions.'
-					});
+					reply({message: 'An email has been sent to ' + user.email + ' with further instructions.'});
 				} else {
-					return res.status(400).send({
-						message: 'Failure sending email'
-					});
+					return reply(Boom.badRequest('Failure sending email'));
 				}
 
 				done(err);
 			});
 		}
 	], function(err) {
-		if (err) return next(err);
+
+		if (err) return reply.continue(err);
 	});
 };
 
 /**
  * Reset password GET from email token
  */
-exports.validateResetToken = function(req, res) {
+exports.validateResetToken = function(request, reply) {
 	User.findOne({
-		resetPasswordToken: req.params.token,
+		resetPasswordToken: request.params.token,
 		resetPasswordExpires: {
 			$gt: Date.now()
 		}
 	}, function(err, user) {
 		if (!user) {
-			return res.redirect('/#!/password/reset/invalid');
+			return reply.redirect('/#!/password/reset/invalid');
 		}
 
-		res.redirect('/#!/password/reset/' + req.params.token);
+		reply.redirect('/#!/password/reset/' + request.params.token);
 	});
 };
 
 /**
  * Reset password POST from email token
  */
-exports.reset = function(req, res, next) {
-	// Init Variables
-	var passwordDetails = req.body;
+exports.reset = function(request, reply) {
 
-	async.waterfall([
+	// Init Variables
+	var passwordDetails = request.payload;
+
+	Async.waterfall([
 
 		function(done) {
 			User.findOne({
-				resetPasswordToken: req.params.token,
+				resetPasswordToken: request.params.token,
 				resetPasswordExpires: {
 					$gt: Date.now()
 				}
@@ -134,16 +134,14 @@ exports.reset = function(req, res, next) {
 
 						user.save(function(err) {
 							if (err) {
-								return res.status(400).send({
-									message: errorHandler.getErrorMessage(err)
-								});
+								return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 							} else {
-								req.login(user, function(err) {
+								request.login(user, function(err) {
 									if (err) {
-										res.status(400).send(err);
+										reply(Boom.badRequest(err));
 									} else {
 										// Return authenticated user
-										res.json(user);
+										reply(user);
 
 										done(err, user);
 									}
@@ -151,21 +149,17 @@ exports.reset = function(req, res, next) {
 							}
 						});
 					} else {
-						return res.status(400).send({
-							message: 'Passwords do not match'
-						});
+						return reply(Boom.badRequest('Passwords do not match'));
 					}
 				} else {
-					return res.status(400).send({
-						message: 'Password reset token is invalid or has expired.'
-					});
+					return reply(Boom.badRequest('Password reset token is invalid or has expired.'));
 				}
 			});
 		},
 		function(user, done) {
-			res.render('templates/reset-password-confirm-email', {
+			request.server.render('templates/reset-password-confirm-email', {
 				name: user.displayName,
-				appName: config.app.title
+				appName: Config.app.title
 			}, function(err, emailHTML) {
 				done(err, emailHTML, user);
 			});
@@ -174,7 +168,7 @@ exports.reset = function(req, res, next) {
 		function(emailHTML, user, done) {
 			var mailOptions = {
 				to: user.email,
-				from: config.mailer.from,
+				from: Config.mailer.from,
 				subject: 'Your password has been changed',
 				html: emailHTML
 			};
@@ -184,20 +178,20 @@ exports.reset = function(req, res, next) {
 			});
 		}
 	], function(err) {
-		if (err) return next(err);
+		if (err) return reply.continue(err);
 	});
 };
 
 /**
  * Change Password
  */
-exports.changePassword = function(req, res) {
+exports.changePassword = function(request, reply) {
 	// Init Variables
-	var passwordDetails = req.body;
+	var passwordDetails = request.payload;
 
-	if (req.user) {
+	if (request.payload.user) {
 		if (passwordDetails.newPassword) {
-			User.findById(req.user.id, function(err, user) {
+			User.findById(request.user.id, function(err, user) {
 				if (!err && user) {
 					if (user.authenticate(passwordDetails.currentPassword)) {
 						if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
@@ -205,15 +199,13 @@ exports.changePassword = function(req, res) {
 
 							user.save(function(err) {
 								if (err) {
-									return res.status(400).send({
-										message: errorHandler.getErrorMessage(err)
-									});
+									return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 								} else {
-									req.login(user, function(err) {
+									request.login(user, function(err) {
 										if (err) {
-											res.status(400).send(err);
+											reply(Boom.badRequest(err));
 										} else {
-											res.send({
+											reply({
 												message: 'Password changed successfully'
 											});
 										}
@@ -221,29 +213,19 @@ exports.changePassword = function(req, res) {
 								}
 							});
 						} else {
-							res.status(400).send({
-								message: 'Passwords do not match'
-							});
+							reply(Boom.badRequest('Passwords do not match'));
 						}
 					} else {
-						res.status(400).send({
-							message: 'Current password is incorrect'
-						});
+						reply(Boom.badRequest('Current password is incorrect'));
 					}
 				} else {
-					res.status(400).send({
-						message: 'User is not found'
-					});
+					reply(Boom.badRequest('User is not found'));
 				}
 			});
 		} else {
-			res.status(400).send({
-				message: 'Please provide a new password'
-			});
+			reply(Boom.badRequest('Please provide a new password'));
 		}
 	} else {
-		res.status(400).send({
-			message: 'User is not signed in'
-		});
+		reply(Boom.badRequest('User is not signed in'));
 	}
 };
