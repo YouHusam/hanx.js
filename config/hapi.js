@@ -78,6 +78,9 @@ module.exports = function(db) {
 		}
 	});
 
+	// Bootstrap passport config
+	require('./passport')(server);
+
 	// Globbing routing files
 	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function(routePath) {
 		require(Path.resolve(routePath))(server);

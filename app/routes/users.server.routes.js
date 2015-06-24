@@ -59,14 +59,17 @@ module.exports = function(server) {
 	{
 		path: '/auth/signin',
 		method: 'POST',
-		handler: users.signin
+		config: {
+			auth: 'local',
+			handler: users.signin
+		}
 	},
 	{
 		path: '/auth/signout',
 		method: 'GET',
 		handler: users.signout
 	},
-
+/*
 	// Setting the facebook oauth routes
 	{
 		path: '/auth/facebook',
@@ -134,6 +137,6 @@ module.exports = function(server) {
 		path: '/auth/github/callback',
 		method: 'GET',
 		handler: users.oauthCallback('github')
-	}
+	}*/
 	]);
 };

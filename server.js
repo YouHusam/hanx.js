@@ -28,9 +28,6 @@ Mongoose.connection.on('error', function(err) {
 // Init the express application
 var server = require('./config/hapi')(db);
 
-// Bootstrap passport config
-require('./config/passport')();
-
 // Start the server by listening on <port>
 server.start();
 

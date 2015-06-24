@@ -49,9 +49,9 @@ exports.signup = function(request, reply) {
 /**
  * Signin after passport authentication
  */
-exports.signin = function(request, reply, next) {
-
-	Passport.authenticate('local', function(err, user, info) {
+exports.signin = function(request, reply) {
+console.log(request.raw.req);
+/*	Passport.authenticate('local', function(err, user, info) {
 		if (err || !user) {
 			reply(Boom.badRequest(info));
 		} else {
@@ -67,7 +67,8 @@ exports.signin = function(request, reply, next) {
 				}
 			});
 		}
-	})(request, reply, next);
+	});*/
+reply(request.auth.credentials);
 };
 
 /**
@@ -75,29 +76,21 @@ exports.signin = function(request, reply, next) {
  */
 exports.signout = function(request, reply) {
 
-	request.logout();
+	request.auth = null;
+	request.headers.authorization = null;
 	reply.redirect('/');
 };
 
 /**
  * OAuth callback
  */
-exports.oauthCallback = function(strategy) {
+exports.oauthCallback = function(request, reply) {
 
-	return function(request, reply, next) {
-		Passport.authenticate(strategy, function(err, user, redirectURL) {
-			if (err || !user) {
-				return reply.redirect('/#!/signin');
-			}
-			request.login(user, function(err) {
-				if (err) {
-					return reply.redirect('/#!/signin');
-				}
+	// if (!request.auth.isAuthenticated) {
+	// 	return reply.redirect('/#!/signin');
+	// }
 
-				return reply.redirect(redirectURL || '/');
-			});
-		})(request, reply, next);
-	};
+	// return reply.redirect('/');
 };
 
 /**
