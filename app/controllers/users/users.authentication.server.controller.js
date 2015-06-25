@@ -3,12 +3,12 @@
 /**
  * Module dependencies.
  */
-var _ = require('lodash'),
-	Boom = require('boom'),
-	Errorhandler = require('../errors.server.controller'),
-	Mongoose = require('mongoose'),
-	Passport = require('passport'),
-	User = Mongoose.model('User');
+var _ 					= require('lodash'),
+	 Boom 				= require('boom'),
+	 Errorhandler = require('../errors.server.controller'),
+	 Mongoose 		= require('mongoose'),
+	 Passport 		= require('passport'),
+	 User 				= Mongoose.model('User');
 
 /**
  * Signup
@@ -50,25 +50,39 @@ exports.signup = function(request, reply) {
  * Signin after passport authentication
  */
 exports.signin = function(request, reply) {
-console.log(request.raw.req);
-/*	Passport.authenticate('local', function(err, user, info) {
-		if (err || !user) {
-			reply(Boom.badRequest(info));
-		} else {
-			// Remove sensitive data before login
-			user.password = undefined;
-			user.salt = undefined;
 
-			request.login(user, function(err) {
-				if (err) {
-					reply(Boom.badRequest(err));
-				} else {
-					reply(user);
-				}
-			});
-		}
-	});*/
-reply(request.auth.credentials);
+	var user = request.auth.credentials;
+	if (!user) {
+
+		var username = request.payload.username;
+		var password = request.payload.password;
+
+		User.findOne({
+			username: username
+		}, function(err, user) {
+
+			if (err) {
+				return reply(Boom.unauthorized());
+			}
+			if (!user) {
+				return reply(Boom.unauthorized());
+			}
+			if (!user.authenticate(password)) {
+				return reply(Boom.unauthorized());
+			}
+
+			request.session.set('login', request.auth.credentials);
+			return reply.continue({credentials: user});
+		});
+
+	} else {
+		// Remove sensitive data before login
+		user.password = undefined;
+		user.salt = undefined;
+
+				reply(user);
+	}
+
 };
 
 /**
@@ -76,8 +90,7 @@ reply(request.auth.credentials);
  */
 exports.signout = function(request, reply) {
 
-	request.auth = null;
-	request.headers.authorization = null;
+	request.session.clear('login');
 	reply.redirect('/');
 };
 
@@ -86,11 +99,11 @@ exports.signout = function(request, reply) {
  */
 exports.oauthCallback = function(request, reply) {
 
-	// if (!request.auth.isAuthenticated) {
-	// 	return reply.redirect('/#!/signin');
-	// }
-
-	// return reply.redirect('/');
+	if (!request.auth.isAuthenticated) {
+		return reply.redirect('/#!/signin');
+	}
+	request.session.set('login', request.auth.credentials);
+	return reply.redirect('/');
 };
 
 /**
@@ -98,7 +111,7 @@ exports.oauthCallback = function(request, reply) {
  */
 exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 
-	if (!request.payload.user) {
+	if (!request.session.get('login')) {
 		// Define a search query fields
 		var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
 		var searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;
@@ -116,6 +129,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 		var searchQuery = {
 			$or: [mainProviderSearchQuery, additionalProviderSearchQuery]
 		};
+
 
 		User.findOne(searchQuery, function(err, user) {
 			if (err) {
@@ -147,7 +161,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 		});
 	} else {
 		// User is already logged in, join the provider data to the existing user
-		var user = request.payload.user;
+		var user = request.auth.credentials;
 
 		// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
 		if (user.provider !== providerUserProfile.provider && (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
@@ -163,7 +177,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 				return done(err, user, '/#!/settings/accounts');
 			});
 		} else {
-			return done(new Error('User is already connected using this provider'), user);
+			return done(user);
 		}
 	}
 };
@@ -173,7 +187,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
  */
 exports.removeOAuthProvider = function(request, reply, next) {
 
-	var user = request.payload.user;
+	var user = request.session.get('login');
 	var provider = request.params.provider;
 
 	if (user && provider) {

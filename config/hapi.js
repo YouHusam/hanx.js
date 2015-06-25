@@ -31,8 +31,19 @@ module.exports = function(db) {
 			}
 		},
 		{ register: require('bell') },
-		{ register: require('hapi-auth-cookie') },
-		// { register: require('yar') }
+		{
+			register: require('yar'),
+			options: {
+				name: 'auth',
+				maxCookieSize: 0,
+				expiresIn: 1000 * 60 * 60 * 24,
+				cookieOptions: {
+					path: '/',
+					isSecure: false,
+					password: Config.sessionSecret
+				}
+			}
+	 }
 	], function(err) {
 		if (err) {
 			console.error(err);

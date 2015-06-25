@@ -4,7 +4,6 @@
  * Module dependencies.
  */
 var passport 	= require('passport'),
-		Basic 		= require('hapi-auth-basic'),
 		User 			= require('mongoose').model('User'),
 		path 			= require('path'),
 		config 		= require('./config');
@@ -28,11 +27,17 @@ module.exports = function(server) {
 		});
 	});
 */
+/*
 	server.register(Basic, function(err) {
 		server.auth.strategy('local', 'basic', {
 			validateFunc: require('./strategies/local.js')
 		});
-	});
+	});*/
+
+var fb = require('./strategies/facebook');
+
+	server.auth.strategy(fb.strategyName, 'bell', fb.strategyConfig);
+
 	// Initialize strategies
 	// config.getGlobbedFiles('./config/strategies/**/*.js').forEach(function(strategy) {
 	// 	require(path.resolve(strategy))();

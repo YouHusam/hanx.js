@@ -13,7 +13,7 @@ var _ = require('lodash'),
  */
 exports.userByID = function(request, reply) {
 
-	var id = request.payload.id;
+	var id = request.param.id;
 	User.findById(id).exec(function(err, user) {
 		if (err) return reply(err);
 		if (!user) return reply(new Error('Failed to load User ' + id));

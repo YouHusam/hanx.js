@@ -5,8 +5,9 @@
  */
 exports.index = function(request, reply) {
 
+	var user = request.session.get('login');
 	reply.view('index', {
-		user: request.user || null,
+		user: user || null,
 		request: request
 	});
 };

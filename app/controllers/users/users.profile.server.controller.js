@@ -51,6 +51,7 @@ exports.update = function(request, reply) {
  * Send User
  */
 exports.me = function(request, reply) {
-
-	reply(request.payload.user || null);
+	console.log(request.auth);
+ var user = request.auth.credentials;
+	reply({user: user});
 };

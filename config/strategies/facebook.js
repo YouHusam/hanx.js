@@ -3,39 +3,47 @@
 /**
  * Module dependencies.
  */
-var passport = require('passport'),
-	FacebookStrategy = require('passport-facebook').Strategy,
-	config = require('../config'),
-	users = require('../../app/controllers/users.server.controller');
+var Config = require('../config'),
+		Users = require('../../app/controllers/users.server.controller');
 
-module.exports = function() {
-	// Use facebook strategy
-	passport.use(new FacebookStrategy({
-			clientID: config.facebook.clientID,
-			clientSecret: config.facebook.clientSecret,
-			callbackURL: config.facebook.callbackURL,
-			passReqToCallback: true
-		},
-		function(req, accessToken, refreshToken, profile, done) {
-			// Set the provider data and include tokens
-			var providerData = profile._json;
-			providerData.accessToken = accessToken;
-			providerData.refreshToken = refreshToken;
 
-			// Create the user OAuth profile
-			var providerUserProfile = {
-				firstName: profile.name.givenName,
-				lastName: profile.name.familyName,
-				displayName: profile.displayName,
-				email: profile.emails[0].value,
-				username: profile.username,
-				provider: 'facebook',
-				providerIdentifierField: 'id',
-				providerData: providerData
-			};
+exports.strategyName = 'facebook';
 
-			// Save the user OAuth profile
-			users.saveOAuthUserProfile(req, providerUserProfile, done);
-		}
-	));
+exports.strategyConfig = {
+	provider: 'facebook',
+	password: Config.sessionSecret,
+	clientId: Config.facebook.clientID,
+	clientSecret: Config.facebook.clientSecret,
+	//location: Config.facebook.callbackURL,
+	isSecure: false,     // Terrible idea but required if not using HTTPS
+};
+
+exports.preFacebook = function (request, reply) {
+
+	var profile = request.auth.credentials.profile;
+	var providerData = request.auth.credentials;
+	var pd = {};
+	pd.accessToken = providerData.token;
+	pd.refreshToken = providerData.refreshToken || undefined;
+
+	var cred = profile.raw;
+	for (var id in cred) {
+
+		pd[id] = cred[id];
+	}
+
+	// Create the user OAuth profile
+	var providerUserProfile = {
+		firstName: profile.name.first,
+		lastName: profile.name.last,
+		displayName: profile.displayName,
+		email: profile.email || profile.id + '@facebook.com',
+		username: profile.username || profile.id,
+		provider: 'facebook',
+		providerIdentifierField: 'id',
+		providerData: pd
+	};
+console.log(providerUserProfile);
+	// Save the user OAuth profile
+	Users.saveOAuthUserProfile(request, providerUserProfile, reply);
 };

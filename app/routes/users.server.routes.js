@@ -3,7 +3,6 @@
 /**
  * Module dependencies.
  */
-var passport = require('passport');
 
 module.exports = function(server) {
 	// User Routes
@@ -59,32 +58,28 @@ module.exports = function(server) {
 	{
 		path: '/auth/signin',
 		method: 'POST',
-		config: {
-			auth: 'local',
-			handler: users.signin
-		}
+		handler: users.signin
 	},
 	{
 		path: '/auth/signout',
 		method: 'GET',
 		handler: users.signout
 	},
-/*
+
 	// Setting the facebook oauth routes
 	{
 		path: '/auth/facebook',
-		method: 'GET',
-		handler:
-			passport.authenticate('facebook', {
-				scope: ['email']
-			})
-	},
-	{
-		path: '/auth/facebook/callback',
-		method: 'GET',
-		handler: users.oauthCallback('facebook')
+		method: ['GET','POST'],
+		config: {
+			auth: 'facebook',
+			pre: [{
+				method: require('../../config/strategies/facebook').preFacebook,
+			}],
+			handler: users.oauthCallback,
+		}
 	},
 
+/*
 	// Setting the twitter oauth routes
 	{
 		path: '/auth/twitter',
