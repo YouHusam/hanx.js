@@ -21,14 +21,12 @@ exports.strategyConfig = {
 exports.preFacebook = function (request, reply) {
 
 	var profile = request.auth.credentials.profile;
-	var providerData = request.auth.credentials;
 	var pd = {};
-	pd.accessToken = providerData.token;
-	pd.refreshToken = providerData.refreshToken || undefined;
+	pd.accessToken = request.auth.credentials.token;
+	pd.refreshToken = request.auth.credentials.refreshToken || undefined;
 
 	var cred = profile.raw;
 	for (var id in cred) {
-
 		pd[id] = cred[id];
 	}
 
@@ -43,7 +41,7 @@ exports.preFacebook = function (request, reply) {
 		providerIdentifierField: 'id',
 		providerData: pd
 	};
-console.log(providerUserProfile);
+
 	// Save the user OAuth profile
 	Users.saveOAuthUserProfile(request, providerUserProfile, reply);
 };

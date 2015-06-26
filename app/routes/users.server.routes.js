@@ -74,6 +74,7 @@ module.exports = function(server) {
 			auth: 'facebook',
 			pre: [{
 				method: require('../../config/strategies/facebook').preFacebook,
+				assign: 'user'
 			}],
 			handler: users.oauthCallback,
 		}

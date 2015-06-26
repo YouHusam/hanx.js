@@ -102,7 +102,7 @@ exports.oauthCallback = function(request, reply) {
 	if (!request.auth.isAuthenticated) {
 		return reply.redirect('/#!/signin');
 	}
-	request.session.set('login', request.auth.credentials);
+	request.session.set('login', request.pre.user);
 	return reply.redirect('/');
 };
 
@@ -130,8 +130,8 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 			$or: [mainProviderSearchQuery, additionalProviderSearchQuery]
 		};
 
-
 		User.findOne(searchQuery, function(err, user) {
+
 			if (err) {
 				return done(err);
 			} else {
@@ -139,6 +139,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 					var possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
 
 					User.findUniqueUsername(possibleUsername, null, function(availableUsername) {
+
 						user = new User({
 							firstName: providerUserProfile.firstName,
 							lastName: providerUserProfile.lastName,
@@ -151,6 +152,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 
 						// And save the user
 						user.save(function(err) {
+
 							return done(err, user);
 						});
 					});
@@ -174,6 +176,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 
 			// And save the user
 			user.save(function(err) {
+
 				return done(err, user, '/#!/settings/accounts');
 			});
 		} else {

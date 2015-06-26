@@ -28,7 +28,7 @@ module.exports = function(server) {
 			path: '/articles/{articleId}',
 			method: 'GET',
 			config: {
-				pre: [{method: Articles.articleByID}],
+				pre: [{method: Articles.articleByID, assign: 'article'}],
 				handler: Articles.read
 			}
 		},
@@ -37,9 +37,9 @@ module.exports = function(server) {
 			method: 'PUT',
 			config: {
 				pre: [
+					{method: Articles.articleByID, assign: 'article'},
 					{method: Users.requiresLogin},
-					{method: Articles.hasAuthorization},
-					{method: Articles.articleByID}
+					{method: Articles.hasAuthorization}
 					],
 				handler: Articles.update
 			}
@@ -49,9 +49,9 @@ module.exports = function(server) {
 			method: 'DELETE',
 			config: {
 				pre: [
+					{method: Articles.articleByID, assign: 'article'},
 					{method: Users.requiresLogin},
-					{method: Articles.hasAuthorization},
-					{method: Articles.articleByID}
+					{method: Articles.hasAuthorization}
 					],
 				handler: Articles.delete
 			}

@@ -27,10 +27,10 @@ exports.userByID = function(request, reply) {
  */
 exports.requiresLogin = function(request, reply) {
 
-	if (!request.isAuthenticated()) {
+	if (!request.session.get('login')) {
 		return reply(Boom.unauthorized('User is not logged in'));
 	}
-	reply.continue();
+	reply();
 };
 
 /**
