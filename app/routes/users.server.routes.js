@@ -14,17 +14,26 @@ module.exports = function(server) {
 	{
 		path: '/users/me',
 		method: 'GET',
-		handler: users.me
+		config: {
+			handler: users.me,
+			auth: 'session'
+		}
 	},
 	{
 		path: '/users',
 		method: 'PUT',
-		handler: users.update
+		config: {
+			handler: users.update,
+			auth: 'session'
+		}
 	},
 	{
 		path: '/users/accounts',
 		method: 'DELETE',
-		handler: users.removeOAuthProvider
+		config: {
+			handler: users.removeOAuthProvider,
+			auth: 'session'
+		}
 	},
 
 	// Setting up the users password api
@@ -58,12 +67,18 @@ module.exports = function(server) {
 	{
 		path: '/auth/signin',
 		method: 'POST',
-		handler: users.signin
+		config:{
+			handler: users.signin,
+			// auth: 'session'
+		}
 	},
 	{
 		path: '/auth/signout',
 		method: 'GET',
-		handler: users.signout
+		config:{
+			handler: users.signout,
+			auth: 'session'
+		}
 	},
 
 	// Setting the facebook oauth routes
@@ -77,6 +92,7 @@ module.exports = function(server) {
 				assign: 'user'
 			}],
 			handler: users.oauthCallback,
+			cache: { expiresIn: 5000 }
 		}
 	},
 

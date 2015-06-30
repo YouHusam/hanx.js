@@ -9,6 +9,7 @@ var Fs 			= require('fs'),
 		Hapi 		= require('hapi'),
 		Logger 	= require('./logger'),
 		Config 	= require('./config'),
+		Boom 		= require('boom'),
 		Path 		= require('path');
 
 module.exports = function(db) {
@@ -34,7 +35,7 @@ module.exports = function(db) {
 		{
 			register: require('yar'),
 			options: {
-				name: 'auth',
+				name: Config.sessionName,
 				maxCookieSize: 0,
 				expiresIn: 1000 * 60 * 60 * 24,
 				cookieOptions: {

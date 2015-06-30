@@ -4,11 +4,11 @@
  * Module dependencies.
  */
 var _ 					= require('lodash'),
-	 Boom 				= require('boom'),
-	 Errorhandler = require('../errors.server.controller'),
-	 Mongoose 		= require('mongoose'),
-	 Passport 		= require('passport'),
-	 User 				= Mongoose.model('User');
+		Boom 				= require('boom'),
+		Errorhandler = require('../errors.server.controller'),
+		Mongoose 		= require('mongoose'),
+		Passport 		= require('passport'),
+		User 				= Mongoose.model('User');
 
 /**
  * Signup
@@ -35,13 +35,8 @@ exports.signup = function(request, reply) {
 			user.password = undefined;
 			user.salt = undefined;
 
-			request.login(user, function(err) {
-				if (err) {
-					reply(Boom.badRequest(err));
-				} else {
-					reply(user);
-				}
-			});
+			request.session.set('login', request.auth.credentials);
+			return reply({credentials: user}).redirect('/');
 		}
 	});
 };
@@ -52,10 +47,11 @@ exports.signup = function(request, reply) {
 exports.signin = function(request, reply) {
 
 	var user = request.auth.credentials;
-	if (!user) {
+	if (!request.auth.isAuthenticated) {
 
 		var username = request.payload.username;
 		var password = request.payload.password;
+		console.log(request.payload);
 
 		User.findOne({
 			username: username
@@ -70,12 +66,10 @@ exports.signin = function(request, reply) {
 			if (!user.authenticate(password)) {
 				return reply(Boom.unauthorized());
 			}
-
+			user = this.user;
 			request.session.set('login', request.auth.credentials);
-			return reply.continue({credentials: user});
 		});
 
-	} else {
 		// Remove sensitive data before login
 		user.password = undefined;
 		user.salt = undefined;
@@ -111,7 +105,7 @@ exports.oauthCallback = function(request, reply) {
  */
 exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 
-	if (!request.session.get('login')) {
+	if (request.auth.isAuthenticated) {
 		// Define a search query fields
 		var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
 		var searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;

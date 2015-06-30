@@ -40,10 +40,10 @@ exports.read = function(request, reply) {
 exports.update = function(request, reply) {
 
 	var article = new Article(request.pre.article);
-
 	article = _.extend(article, request.payload);
 
 	article.save(function(err) {
+
 		if (err) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 		} else {
@@ -60,6 +60,7 @@ exports.delete = function(request, reply) {
 	var article = new Article(request.pre.article);
 
 	article.remove(function(err) {
+
 		if (err) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 		} else {
@@ -74,6 +75,7 @@ exports.delete = function(request, reply) {
 exports.list = function(request, reply) {
 
 	Article.find().sort('-created').populate('user', 'displayName').exec(function(err, articles) {
+
 		if (err) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 		} else {
@@ -93,6 +95,7 @@ exports.articleByID = function(request, reply) {
 	}
 
 	Article.findById(id).populate('user', 'displayName').exec(function(err, article) {
+
 		if (err) return reply(err);
 		if (!article) {
 			return reply(Boom.notfound('Article not found'));

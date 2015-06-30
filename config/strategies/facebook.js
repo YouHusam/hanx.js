@@ -14,7 +14,6 @@ exports.strategyConfig = {
 	password: Config.sessionSecret,
 	clientId: Config.facebook.clientID,
 	clientSecret: Config.facebook.clientSecret,
-	//location: Config.facebook.callbackURL,
 	isSecure: false,     // Terrible idea but required if not using HTTPS
 };
 

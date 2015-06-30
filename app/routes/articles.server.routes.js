@@ -18,7 +18,7 @@ module.exports = function(server) {
 			path: '/articles',
 			method: 'POST',
 			config: {
-				pre: [{method: Users.requiresLogin}],
+				auth: 'session',
 				handler: Articles.create
 			}
 		},
@@ -36,9 +36,9 @@ module.exports = function(server) {
 			path: '/articles/{articleId}',
 			method: 'PUT',
 			config: {
+				auth: 'session',
 				pre: [
 					{method: Articles.articleByID, assign: 'article'},
-					{method: Users.requiresLogin},
 					{method: Articles.hasAuthorization}
 					],
 				handler: Articles.update
@@ -48,9 +48,9 @@ module.exports = function(server) {
 			path: '/articles/{articleId}',
 			method: 'DELETE',
 			config: {
+				auth: 'session',
 				pre: [
 					{method: Articles.articleByID, assign: 'article'},
-					{method: Users.requiresLogin},
 					{method: Articles.hasAuthorization}
 					],
 				handler: Articles.delete

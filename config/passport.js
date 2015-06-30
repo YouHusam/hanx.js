@@ -3,36 +3,17 @@
 /**
  * Module dependencies.
  */
-var passport 	= require('passport'),
-		User 			= require('mongoose').model('User'),
-		path 			= require('path'),
+var path 			= require('path'),
 		config 		= require('./config');
 
 /**
  * Module init function.
  */
 module.exports = function(server) {
-	// Serialize sessions
-	/*
-	passport.serializeUser(function(user, done) {
-		done(null, user.id);
-	});
 
-	// Deserialize sessions
-	passport.deserializeUser(function(id, done) {
-		User.findOne({
-			_id: id
-		}, '-salt -password', function(err, user) {
-			done(err, user);
-		});
-	});
-*/
-/*
-	server.register(Basic, function(err) {
-		server.auth.strategy('local', 'basic', {
-			validateFunc: require('./strategies/local.js')
-		});
-	});*/
+var session = require('./strategies/session');
+session.setServer(server);
+server.auth.strategy('session', 'yar-session', session.strategyConfig);
 
 var fb = require('./strategies/facebook');
 
