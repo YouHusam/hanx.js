@@ -27,7 +27,7 @@ exports.userByID = function(request, reply) {
  */
 exports.requiresLogin = function(request, reply) {
 
-	if (!request.session.get('login')) {
+	if (!request.session.get(request.server.app.sessionName)) {
 		return reply(Boom.unauthorized('User is not logged in'));
 	}
 	reply();

@@ -15,7 +15,7 @@ var mongoose = require('mongoose'),
 exports.create = function(request, reply) {
 
 	var article = new Article(request.payload);
-	article.user = request.session.get('login');
+	article.user = request.session.get(request.server.app.sessionName);
 
 	article.save(function(err) {
 		if (err) {
@@ -39,15 +39,20 @@ exports.read = function(request, reply) {
  */
 exports.update = function(request, reply) {
 
-	var article = new Article(request.pre.article);
-	article = _.extend(article, request.payload);
+	var article = Article.findOne(request.pre.article, function(err, article) {
 
-	article.save(function(err) {
+		if(article){
+			article = _.extend(article, request.payload);
+			article.save(function(err) {
 
-		if (err) {
-			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-		} else {
-			reply(article);
+				if (err) {
+					return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+				} else {
+					reply(article);
+				}
+			});
+		}	else {
+			reply(Boom.badRequest('Article not found'));
 		}
 	});
 };
@@ -109,7 +114,7 @@ exports.articleByID = function(request, reply) {
  */
 exports.hasAuthorization = function(request, reply) {
 
-	if (request.pre.article.user.id !== request.session.get('login')._id) {
+	if (request.pre.article.user.id !== request.session.get(request.server.app.sessionName)._id) {
 		return reply(Boom.forbidden('User is not authorized'));
 	}
 	reply();

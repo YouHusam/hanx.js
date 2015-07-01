@@ -14,15 +14,15 @@ var scheme = function(server, options) {
 
 			var session = request.state[options.sessionName];
 			if(!session){
-				return reply(Boom.unauthorized('Not authorised1'));
+				return reply(Boom.unauthorized('Not authorised'));
 			}
 
 			if(session.id !== request.session.id){
-				return reply(Boom.unauthorized('Not authorised2'));
+				return reply(Boom.unauthorized('Not authorised'));
 			}
 
 			if (!request.session.get(options.sessionName)) {
-				return reply(Boom.unauthorized('Not authorised3'));
+				return reply(Boom.unauthorized('Not authorised'));
 			}
 
 			reply.continue({credentials: request.session.get(options.sessionName)});
@@ -30,10 +30,8 @@ var scheme = function(server, options) {
 	};
 };
 
-
 exports.setServer = function(server) {
-server.auth.scheme('yar-session', scheme);
 
-
+	server.auth.scheme('yar-session', scheme);
 };
 

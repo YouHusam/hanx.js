@@ -3,12 +3,11 @@
 /**
  * Module dependencies.
  */
-var _ 					= require('lodash'),
-		Boom 				= require('boom'),
-		Errorhandler = require('../errors.server.controller'),
-		Mongoose 		= require('mongoose'),
-		Passport 		= require('passport'),
-		User 				= Mongoose.model('User');
+var _ 						= require('lodash'),
+		Boom 					= require('boom'),
+		Errorhandler 	= require('../errors.server.controller'),
+		Mongoose 			= require('mongoose'),
+		User 					= Mongoose.model('User');
 
 /**
  * Signup
@@ -35,48 +34,47 @@ exports.signup = function(request, reply) {
 			user.password = undefined;
 			user.salt = undefined;
 
-			request.session.set('login', request.auth.credentials);
+			request.session.set(request.server.app.sessionName, request.auth.credentials);
 			return reply({credentials: user}).redirect('/');
 		}
 	});
 };
 
 /**
- * Signin after passport authentication
+ * Local Signin
  */
 exports.signin = function(request, reply) {
 
-	var user = request.auth.credentials;
 	if (!request.auth.isAuthenticated) {
 
 		var username = request.payload.username;
 		var password = request.payload.password;
-		console.log(request.payload);
 
 		User.findOne({
 			username: username
 		}, function(err, user) {
 
 			if (err) {
-				return reply(Boom.unauthorized());
+				return reply(Boom.unauthorized('Username or password are wrong'));
 			}
 			if (!user) {
-				return reply(Boom.unauthorized());
+				return reply(Boom.unauthorized('Username or password are wrong'));
 			}
 			if (!user.authenticate(password)) {
-				return reply(Boom.unauthorized());
+				return reply(Boom.unauthorized('Username or password are wrong'));
 			}
-			user = this.user;
-			request.session.set('login', request.auth.credentials);
+
+			// Remove sensitive data before login
+			delete user.password;
+			delete user.salt;
+			request.session.set(request.server.app.sessionName, user);
+			reply(user);
 		});
+	} else {
 
-		// Remove sensitive data before login
-		user.password = undefined;
-		user.salt = undefined;
-
-				reply(user);
+		var user = request.auth.credentials;
+		reply(user);
 	}
-
 };
 
 /**
@@ -84,7 +82,7 @@ exports.signin = function(request, reply) {
  */
 exports.signout = function(request, reply) {
 
-	request.session.clear('login');
+	request.session.clear(request.server.app.sessionName);
 	reply.redirect('/');
 };
 
@@ -96,7 +94,7 @@ exports.oauthCallback = function(request, reply) {
 	if (!request.auth.isAuthenticated) {
 		return reply.redirect('/#!/signin');
 	}
-	request.session.set('login', request.pre.user);
+	request.session.set(request.server.app.sessionName, request.pre.user);
 	return reply.redirect('/');
 };
 
@@ -123,7 +121,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 		var searchQuery = {
 			$or: [mainProviderSearchQuery, additionalProviderSearchQuery]
 		};
-
+		console.log(searchQuery);
 		User.findOne(searchQuery, function(err, user) {
 
 			if (err) {
@@ -160,7 +158,8 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 		var user = request.auth.credentials;
 
 		// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
-		if (user.provider !== providerUserProfile.provider && (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
+		if (user.provider !== providerUserProfile.provider &&
+			(!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
 			// Add the provider data to the additional provider data field
 			if (!user.additionalProvidersData) user.additionalProvidersData = {};
 			user.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
@@ -184,7 +183,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
  */
 exports.removeOAuthProvider = function(request, reply, next) {
 
-	var user = request.session.get('login');
+	var user = request.session.get(request.server.app.sessionName);
 	var provider = request.params.provider;
 
 	if (user && provider) {

@@ -18,6 +18,9 @@ module.exports = function(db) {
 	var server = new Hapi.Server();
 	server.connection({port: Config.port});
 
+	// Setup global variables
+	server.app.sessionName = Config.sessionName;
+
 	// Globbing model files
 	Config.getGlobbedFiles('./app/models/**/*.js').forEach(function(modelPath) {
 		require(Path.resolve(modelPath));
@@ -35,7 +38,7 @@ module.exports = function(db) {
 		{
 			register: require('yar'),
 			options: {
-				name: Config.sessionName,
+				name: server.app.sessionName,
 				maxCookieSize: 0,
 				expiresIn: 1000 * 60 * 60 * 24,
 				cookieOptions: {
