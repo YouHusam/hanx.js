@@ -3,10 +3,10 @@
 /**
  * Module dependencies.
  */
-var Users = require('../../app/controllers/users.server.controller'),
-	Articles = require('../../app/controllers/articles.server.controller');
+var Users 		= require('../../app/controllers/users.server.controller'),
+		Articles 	= require('../../app/controllers/articles.server.controller');
 
-module.exports = function(server) {
+module.exports = function (server) {
 
 	// Article Routes
 	server.route([{
@@ -18,7 +18,7 @@ module.exports = function(server) {
 			path: '/articles',
 			method: 'POST',
 			config: {
-				pre: [{method: Users.requiresLogin}],
+				auth: 'session',
 				handler: Articles.create
 			}
 		},
@@ -28,7 +28,7 @@ module.exports = function(server) {
 			path: '/articles/{articleId}',
 			method: 'GET',
 			config: {
-				pre: [{method: Articles.articleByID}],
+				pre: [{method: Articles.articleByID, assign: 'article'}],
 				handler: Articles.read
 			}
 		},
@@ -36,10 +36,10 @@ module.exports = function(server) {
 			path: '/articles/{articleId}',
 			method: 'PUT',
 			config: {
+				auth: 'session',
 				pre: [
-					{method: Users.requiresLogin},
-					{method: Articles.hasAuthorization},
-					{method: Articles.articleByID}
+					{method: Articles.articleByID, assign: 'article'},
+					{method: Articles.hasAuthorization}
 					],
 				handler: Articles.update
 			}
@@ -48,10 +48,10 @@ module.exports = function(server) {
 			path: '/articles/{articleId}',
 			method: 'DELETE',
 			config: {
+				auth: 'session',
 				pre: [
-					{method: Users.requiresLogin},
-					{method: Articles.hasAuthorization},
-					{method: Articles.articleByID}
+					{method: Articles.articleByID, assign: 'article'},
+					{method: Articles.hasAuthorization}
 					],
 				handler: Articles.delete
 			}

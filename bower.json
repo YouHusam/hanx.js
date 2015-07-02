@@ -1,7 +1,7 @@
 {
-	"name": "meanjs",
+	"name": "hamnjs",
 	"version": "0.3.2",
-	"description": "Fullstack JavaScript with MongoDB, Express, AngularJS, and Node.js.",
+	"description": "Fullstack JavaScript with MongoDB, HapiJS, AngularJS, and Node.js.",
 	"dependencies": {
 		"bootstrap": "~3",
 		"angular": "~1.3",

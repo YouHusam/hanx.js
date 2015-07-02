@@ -3,9 +3,9 @@
 /**
  * Module dependencies.
  */
-var passport = require('passport');
 
-module.exports = function(server) {
+module.exports = function (server) {
+
 	// User Routes
 	var users = require('../../app/controllers/users.server.controller');
 
@@ -15,17 +15,26 @@ module.exports = function(server) {
 	{
 		path: '/users/me',
 		method: 'GET',
-		handler: users.me
+		config: {
+			handler: users.me,
+			auth: 'session'
+		}
 	},
 	{
 		path: '/users',
 		method: 'PUT',
-		handler: users.update
+		config: {
+			handler: users.update,
+			auth: 'session'
+		}
 	},
 	{
 		path: '/users/accounts',
 		method: 'DELETE',
-		handler: users.removeOAuthProvider
+		config: {
+			handler: users.removeOAuthProvider,
+			auth: 'session'
+		}
 	},
 
 	// Setting up the users password api
@@ -59,81 +68,89 @@ module.exports = function(server) {
 	{
 		path: '/auth/signin',
 		method: 'POST',
-		handler: users.signin
+		config:{
+			handler: users.signin,
+			// auth: 'session'
+		}
 	},
 	{
 		path: '/auth/signout',
 		method: 'GET',
-		handler: users.signout
+		config:{
+			handler: users.signout,
+			auth: 'session'
+		}
 	},
 
 	// Setting the facebook oauth routes
 	{
 		path: '/auth/facebook',
-		method: 'GET',
-		handler:
-			passport.authenticate('facebook', {
-				scope: ['email']
-			})
+		method: ['GET','POST'],
+		config: {
+			auth: 'facebook',
+			pre: [{
+				method: require('../../config/strategies/facebook').preFacebook,
+				assign: 'user'
+			}],
+			handler: users.oauthCallback
+		}
 	},
-	{
-		path: '/auth/facebook/callback',
-		method: 'GET',
-		handler: users.oauthCallback('facebook')
-	},
+
 
 	// Setting the twitter oauth routes
 	{
 		path: '/auth/twitter',
-		method: 'GET',
-		handler: passport.authenticate('twitter')
-	},
-	{
-		path: '/auth/twitter/callback',
-		method: 'GET',
-		handler: users.oauthCallback('twitter')
+		method: ['GET','POST'],
+		config: {
+			auth: 'twitter',
+			pre: [{
+				method: require('../../config/strategies/twitter').preTwitter,
+				assign: 'user'
+			}],
+			handler: users.oauthCallback
+		}
 	},
 
 	// Setting the google oauth routes
 	{
 		path: '/auth/google',
-		method: 'GET',
-		handler:
-			passport.authenticate('google', {
-				scope: [
-					'https://www.googleapis.com/auth/userinfo.profile',
-					'https://www.googleapis.com/auth/userinfo.email'
-				]
-		})
-	},
-	{
-		path: '/auth/google/callback',
-		method: 'GET',
-		handler: users.oauthCallback('google')
-	},
-
-	// Setting the linkedin oauth routes
-	{
-		path: '/auth/linkedin',
-		method: 'GET',
-		handler: passport.authenticate('linkedin')
-	},
-	{
-		path: '/auth/linkedin/callback',
-		method: 'GET',
-		handler: users.oauthCallback('linkedin')
+		method: ['GET','POST'],
+		config: {
+			auth: 'google',
+			pre: [{
+				method: require('../../config/strategies/google').preGoogle,
+				assign: 'user'
+			}],
+			handler: users.oauthCallback
+		}
 	},
 
 	// Setting the github oauth routes
 	{
 		path: '/auth/github',
-		method: 'GET',
-		handler: passport.authenticate('github')
+		method: ['GET','POST'],
+		config: {
+			auth: 'github',
+			pre: [{
+				method: require('../../config/strategies/github').preGithub,
+				assign: 'user'
+			}],
+			handler: users.oauthCallback
+		}
 	},
+
+	// Setting the linkedin oauth routes
 	{
-		path: '/auth/github/callback',
-		method: 'GET',
-		handler: users.oauthCallback('github')
+		path: '/auth/linkedin',
+		method: ['GET','POST'],
+		config: {
+			auth: 'linkedin',
+			pre: [{
+				method: require('../../config/strategies/linkedin').preLinkedin,
+				assign: 'user'
+			}],
+			handler: users.oauthCallback
+		}
 	}
 	]);
 };

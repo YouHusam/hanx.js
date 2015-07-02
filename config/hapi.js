@@ -9,16 +9,20 @@ var Fs 			= require('fs'),
 		Hapi 		= require('hapi'),
 		Logger 	= require('./logger'),
 		Config 	= require('./config'),
+		Boom 		= require('boom'),
 		Path 		= require('path');
 
-module.exports = function(db) {
+module.exports = function (db) {
 
 	// Initialize hapi app
 	var server = new Hapi.Server();
 	server.connection({port: Config.port});
 
+	// Setup global variables
+	server.app.sessionName = Config.sessionName;
+
 	// Globbing model files
-	Config.getGlobbedFiles('./app/models/**/*.js').forEach(function(modelPath) {
+	Config.getGlobbedFiles('./app/models/**/*.js').forEach(function (modelPath) {
 		require(Path.resolve(modelPath));
 	});
 
@@ -31,9 +35,20 @@ module.exports = function(db) {
 			}
 		},
 		{ register: require('bell') },
-		{ register: require('hapi-auth-cookie') },
-		// { register: require('yar') }
-	], function(err) {
+		{
+			register: require('yar'),
+			options: {
+				name: server.app.sessionName,
+				maxCookieSize: 0,
+				expiresIn: 1000 * 60 * 60 * 24,
+				cookieOptions: {
+					path: '/',
+					isSecure: false,
+					password: Config.sessionSecret
+				}
+			}
+	 }
+	], function (err) {
 		if (err) {
 			console.error(err);
 		}
@@ -78,8 +93,12 @@ module.exports = function(db) {
 		}
 	});
 
+	// Setup the authentication strategies
+	require('./session')(server);
+	require('./strategies')(server);
+
 	// Globbing routing files
-	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function(routePath) {
+	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function (routePath) {
 		require(Path.resolve(routePath))(server);
 	});
 
@@ -91,6 +110,10 @@ module.exports = function(db) {
 				return reply.view('404', {
 					url: request.url.path
 				});
+
+			// Set 401 errors to redirect to the signin page
+			if(request.response.output.statusCode === 401)
+				return reply.redirect('/#!/signin');
 		}
 		return reply.continue();
 	});

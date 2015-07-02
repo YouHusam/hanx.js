@@ -30,7 +30,7 @@ module.exports = {
 		// domain: 'yourdomain.com'
 	},
 	// The session cookie name
-	sessionName: 'connect.sid',
+	sessionName: 'login',
 	log: {
 		// Can specify one of 'combined', 'common', 'dev', 'short', 'tiny'
 		format: 'combined',
