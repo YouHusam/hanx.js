@@ -96,59 +96,65 @@ module.exports = function(server) {
 		}
 	},
 
-/*
+
 	// Setting the twitter oauth routes
 	{
 		path: '/auth/twitter',
-		method: 'GET',
-		handler: passport.authenticate('twitter')
-	},
-	{
-		path: '/auth/twitter/callback',
-		method: 'GET',
-		handler: users.oauthCallback('twitter')
+		method: ['GET','POST'],
+		config: {
+			auth: 'twitter',
+			pre: [{
+				method: require('../../config/strategies/twitter').preTwitter,
+				assign: 'user'
+			}],
+			handler: users.oauthCallback,
+			cache: { expiresIn: 5000 }
+		}
 	},
 
 	// Setting the google oauth routes
 	{
 		path: '/auth/google',
-		method: 'GET',
-		handler:
-			passport.authenticate('google', {
-				scope: [
-					'https://www.googleapis.com/auth/userinfo.profile',
-					'https://www.googleapis.com/auth/userinfo.email'
-				]
-		})
-	},
-	{
-		path: '/auth/google/callback',
-		method: 'GET',
-		handler: users.oauthCallback('google')
-	},
-
-	// Setting the linkedin oauth routes
-	{
-		path: '/auth/linkedin',
-		method: 'GET',
-		handler: passport.authenticate('linkedin')
-	},
-	{
-		path: '/auth/linkedin/callback',
-		method: 'GET',
-		handler: users.oauthCallback('linkedin')
+		method: ['GET','POST'],
+		config: {
+			auth: 'google',
+			pre: [{
+				method: require('../../config/strategies/google').preGoogle,
+				assign: 'user'
+			}],
+			handler: users.oauthCallback,
+			cache: { expiresIn: 5000 }
+		}
 	},
 
 	// Setting the github oauth routes
 	{
 		path: '/auth/github',
-		method: 'GET',
-		handler: passport.authenticate('github')
+		method: ['GET','POST'],
+		config: {
+			auth: 'github',
+			pre: [{
+				method: require('../../config/strategies/github').preGithub,
+				assign: 'user'
+			}],
+			handler: users.oauthCallback,
+			cache: { expiresIn: 5000 }
+		}
 	},
+
+	// Setting the linkedin oauth routes
 	{
-		path: '/auth/github/callback',
-		method: 'GET',
-		handler: users.oauthCallback('github')
-	}*/
+		path: '/auth/linkedin',
+		method: ['GET','POST'],
+		config: {
+			auth: 'linkedin',
+			pre: [{
+				method: require('../../config/strategies/linkedin').preLinkedin,
+				assign: 'user'
+			}],
+			handler: users.oauthCallback,
+			cache: { expiresIn: 5000 }
+		}
+	}
 	]);
 };

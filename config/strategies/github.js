@@ -3,44 +3,51 @@
 /**
  * Module dependencies.
  */
-var passport = require('passport'),
-	GithubStrategy = require('passport-github').Strategy,
-	config = require('../config'),
-	users = require('../../app/controllers/users.server.controller');
+var Config = require('../config'),
+		Users = require('../../app/controllers/users.server.controller');
 
-module.exports = function() {
-	// Use github strategy
-	passport.use(new GithubStrategy({
-			clientID: config.github.clientID,
-			clientSecret: config.github.clientSecret,
-			callbackURL: config.github.callbackURL,
-			passReqToCallback: true
-		},
-		function(req, accessToken, refreshToken, profile, done) {
-			// Set the provider data and include tokens
-			var providerData = profile._json;
-			providerData.accessToken = accessToken;
-			providerData.refreshToken = refreshToken;
 
-			// Create the user OAuth profile
-			var displayName = profile.displayName.trim();
-			var iSpace = displayName.indexOf(' '); // index of the whitespace following the firstName
-			var firstName =  iSpace !== -1 ? displayName.substring(0, iSpace) : displayName;
-			var lastName = iSpace !== -1 ? displayName.substring(iSpace + 1) : '';
+exports.strategyName = 'github';
+exports.schemeName = 'bell';
 
-			var providerUserProfile = {
-				firstName: firstName,
-				lastName: lastName,
-				displayName: displayName,
-				email: profile.emails[0].value,
-				username: profile.username,
-				provider: 'github',
-				providerIdentifierField: 'id',
-				providerData: providerData
-			};
+exports.strategyConfig = {
+	provider: 'github',
+	password: Config.sessionSecret,
+	clientId: Config.github.clientID,
+	clientSecret: Config.github.clientSecret,
+	isSecure: false     // Terrible idea but required if not using HTTPS
+};
 
-			// Save the user OAuth profile
-			users.saveOAuthUserProfile(req, providerUserProfile, done);
-		}
-	));
+exports.preGithub = function (request, reply) {
+
+	var profile = request.auth.credentials.profile;
+	var pd = {};
+	pd.accessToken = request.auth.credentials.token;
+	pd.refreshToken = request.auth.credentials.refreshToken || undefined;
+
+	// Create the user OAuth profile
+	var displayName = profile.displayName.trim();
+	var iSpace = displayName.indexOf(' '); // index of the whitespace following the firstName
+	var firstName =  iSpace !== -1 ? displayName.substring(0, iSpace) : displayName;
+	var lastName = iSpace !== -1 ? displayName.substring(iSpace + 1) : '';
+
+	var cred = profile.raw;
+	for (var id in cred) {
+		pd[id] = cred[id];
+	}
+
+	// Create the user OAuth profile
+	var providerUserProfile = {
+		firstName: firstName,
+		lastName: lastName,
+		displayName: profile.displayName,
+		email: profile.email,
+		username: profile.username,
+		provider: 'github',
+		providerIdentifierField: 'id',
+		providerData: pd
+	};
+
+	// Save the user OAuth profile
+	Users.saveOAuthUserProfile(request, providerUserProfile, reply);
 };

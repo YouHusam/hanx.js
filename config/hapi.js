@@ -93,8 +93,9 @@ module.exports = function(db) {
 		}
 	});
 
-	// Bootstrap passport config
-	require('./passport')(server);
+	// Setup the authentication strategies
+	require('./session')(server);
+	require('./strategies')(server);
 
 	// Globbing routing files
 	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function(routePath) {

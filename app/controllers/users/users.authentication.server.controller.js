@@ -31,11 +31,11 @@ exports.signup = function(request, reply) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 		} else {
 			// Remove sensitive data before login
-			user.password = undefined;
-			user.salt = undefined;
+			delete user.password;
+			delete user.salt;
 
-			request.session.set(request.server.app.sessionName, request.auth.credentials);
-			return reply({credentials: user}).redirect('/');
+			request.session.set(request.server.app.sessionName, user);
+			reply(user);
 		}
 	});
 };
@@ -121,7 +121,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 		var searchQuery = {
 			$or: [mainProviderSearchQuery, additionalProviderSearchQuery]
 		};
-		console.log(searchQuery);
+
 		User.findOne(searchQuery, function(err, user) {
 
 			if (err) {

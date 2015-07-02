@@ -3,39 +3,45 @@
 /**
  * Module dependencies.
  */
-var passport = require('passport'),
-	GoogleStrategy = require('passport-google-oauth').OAuth2Strategy,
-	config = require('../config'),
-	users = require('../../app/controllers/users.server.controller');
+var Config = require('../config'),
+		Users = require('../../app/controllers/users.server.controller');
 
-module.exports = function() {
-	// Use google strategy
-	passport.use(new GoogleStrategy({
-			clientID: config.google.clientID,
-			clientSecret: config.google.clientSecret,
-			callbackURL: config.google.callbackURL,
-			passReqToCallback: true
-		},
-		function(req, accessToken, refreshToken, profile, done) {
-			// Set the provider data and include tokens
-			var providerData = profile._json;
-			providerData.accessToken = accessToken;
-			providerData.refreshToken = refreshToken;
 
-			// Create the user OAuth profile
-			var providerUserProfile = {
-				firstName: profile.name.givenName,
-				lastName: profile.name.familyName,
-				displayName: profile.displayName,
-				email: profile.emails[0].value,
-				username: profile.username,
-				provider: 'google',
-				providerIdentifierField: 'id',
-				providerData: providerData
-			};
+exports.strategyName = 'google';
+exports.schemeName = 'bell';
 
-			// Save the user OAuth profile
-			users.saveOAuthUserProfile(req, providerUserProfile, done);
-		}
-	));
+exports.strategyConfig = {
+	provider: 'google',
+	password: Config.sessionSecret,
+	clientId: Config.google.clientID,
+	clientSecret: Config.google.clientSecret,
+	isSecure: false     // Terrible idea but required if not using HTTPS
+};
+
+exports.preGoogle = function (request, reply) {
+
+	var profile = request.auth.credentials.profile;
+	var pd = {};
+	pd.accessToken = request.auth.credentials.token;
+	pd.refreshToken = request.auth.credentials.refreshToken || undefined;
+
+	var cred = profile.raw;
+	for (var id in cred) {
+		pd[id] = cred[id];
+	}
+
+	// Create the user OAuth profile
+	var providerUserProfile = {
+		firstName: profile.raw.given_name,
+		lastName: profile.raw.family_name,
+		displayName: profile.displayName,
+		email: profile.email,
+		username: profile.username,
+		provider: 'google',
+		providerIdentifierField: 'id',
+		providerData: pd
+	};
+
+	// Save the user OAuth profile
+	Users.saveOAuthUserProfile(request, providerUserProfile, reply);
 };

@@ -8,6 +8,7 @@ var Config = require('../config'),
 
 
 exports.strategyName = 'facebook';
+exports.schemeName = 'bell';
 
 exports.strategyConfig = {
 	provider: 'facebook',
