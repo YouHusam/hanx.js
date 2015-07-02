@@ -156,25 +156,28 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 	} else {
 		// User is already logged in, join the provider data to the existing user
 		var user = request.auth.credentials;
+		User.findOne({id: request.auth.credentials.id}, function (err, user) {
 
-		// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
-		if (user.provider !== providerUserProfile.provider &&
-			(!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
-			// Add the provider data to the additional provider data field
-			if (!user.additionalProvidersData) user.additionalProvidersData = {};
-			user.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
+			// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
+			if (user.provider !== providerUserProfile.provider &&
+				(!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
+				// Add the provider data to the additional provider data field
+				if (!user.additionalProvidersData) user.additionalProvidersData = {};
+				user.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
 
-			// Then tell mongoose that we've updated the additionalProvidersData field
-			user.markModified('additionalProvidersData');
+				// Then tell mongoose that we've updated the additionalProvidersData field
+				user.markModified('additionalProvidersData');
 
-			// And save the user
-			user.save(function(err) {
+				// And save the user
+				user.save(function(err) {
 
-				return done(err, user, '/#!/settings/accounts');
-			});
-		} else {
-			return done(user);
-		}
+					return done(err, user, '/#!/settings/accounts');
+				});
+			} else {
+				return done(user);
+			}
+		});
+
 	}
 };
 
