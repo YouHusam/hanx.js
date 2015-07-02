@@ -91,8 +91,7 @@ module.exports = function(server) {
 				method: require('../../config/strategies/facebook').preFacebook,
 				assign: 'user'
 			}],
-			handler: users.oauthCallback,
-			cache: { expiresIn: 5000 }
+			handler: users.oauthCallback
 		}
 	},
 
@@ -107,8 +106,7 @@ module.exports = function(server) {
 				method: require('../../config/strategies/twitter').preTwitter,
 				assign: 'user'
 			}],
-			handler: users.oauthCallback,
-			cache: { expiresIn: 5000 }
+			handler: users.oauthCallback
 		}
 	},
 
@@ -122,8 +120,7 @@ module.exports = function(server) {
 				method: require('../../config/strategies/google').preGoogle,
 				assign: 'user'
 			}],
-			handler: users.oauthCallback,
-			cache: { expiresIn: 5000 }
+			handler: users.oauthCallback
 		}
 	},
 
@@ -137,8 +134,7 @@ module.exports = function(server) {
 				method: require('../../config/strategies/github').preGithub,
 				assign: 'user'
 			}],
-			handler: users.oauthCallback,
-			cache: { expiresIn: 5000 }
+			handler: users.oauthCallback
 		}
 	},
 
@@ -152,8 +148,7 @@ module.exports = function(server) {
 				method: require('../../config/strategies/linkedin').preLinkedin,
 				assign: 'user'
 			}],
-			handler: users.oauthCallback,
-			cache: { expiresIn: 5000 }
+			handler: users.oauthCallback
 		}
 	}
 	]);
