@@ -12,12 +12,12 @@ var mongoose = require('mongoose'),
 /**
  * Create a article
  */
-exports.create = function(request, reply) {
+exports.create = function (request, reply) {
 
 	var article = new Article(request.payload);
 	article.user = request.session.get(request.server.app.sessionName);
 
-	article.save(function(err) {
+	article.save(function (err) {
 		if (err) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 		} else {
@@ -29,7 +29,7 @@ exports.create = function(request, reply) {
 /**
  * Show the current article
  */
-exports.read = function(request, reply) {
+exports.read = function (request, reply) {
 
 	reply(request.pre.article);
 };
@@ -37,13 +37,13 @@ exports.read = function(request, reply) {
 /**
  * Update a article
  */
-exports.update = function(request, reply) {
+exports.update = function (request, reply) {
 
-	var article = Article.findOne(request.pre.article, function(err, article) {
+	var article = Article.findOne(request.pre.article, function (err, article) {
 
 		if(article){
 			article = _.extend(article, request.payload);
-			article.save(function(err) {
+			article.save(function (err) {
 
 				if (err) {
 					return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
@@ -60,11 +60,11 @@ exports.update = function(request, reply) {
 /**
  * Delete an article
  */
-exports.delete = function(request, reply) {
+exports.delete = function (request, reply) {
 
 	var article = new Article(request.pre.article);
 
-	article.remove(function(err) {
+	article.remove(function (err) {
 
 		if (err) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
@@ -77,9 +77,9 @@ exports.delete = function(request, reply) {
 /**
  * List of Articles
  */
-exports.list = function(request, reply) {
+exports.list = function (request, reply) {
 
-	Article.find().sort('-created').populate('user', 'displayName').exec(function(err, articles) {
+	Article.find().sort('-created').populate('user', 'displayName').exec(function (err, articles) {
 
 		if (err) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
@@ -92,14 +92,14 @@ exports.list = function(request, reply) {
 /**
  * Article middleware
  */
-exports.articleByID = function(request, reply) {
+exports.articleByID = function (request, reply) {
 
 	var id = request.params.articleId;
 	if (!mongoose.Types.ObjectId.isValid(id)) {
 		return reply(Boom.badRequest('Article is invalid'));
 	}
 
-	Article.findById(id).populate('user', 'displayName').exec(function(err, article) {
+	Article.findById(id).populate('user', 'displayName').exec(function (err, article) {
 
 		if (err) return reply(err);
 		if (!article) {
@@ -112,7 +112,7 @@ exports.articleByID = function(request, reply) {
 /**
  * Article authorization middleware
  */
-exports.hasAuthorization = function(request, reply) {
+exports.hasAuthorization = function (request, reply) {
 
 	if (request.pre.article.user.id !== request.session.get(request.server.app.sessionName)._id) {
 		return reply(Boom.forbidden('User is not authorized'));

@@ -3,11 +3,11 @@
 /**
  * Module dependencies.
  */
-var _ = require('lodash'),
-	Boom = require('boom'),
-	Errorhandler = require('../errors.server.controller.js'),
-	Mongoose = require('mongoose'),
-	User = Mongoose.model('User');
+var _ 						= require('lodash'),
+		Boom 					= require('boom'),
+		Errorhandler 	= require('../errors.server.controller.js'),
+		Mongoose 			= require('mongoose'),
+		User 					= Mongoose.model('User');
 
 /**
  * Update user details
@@ -22,7 +22,7 @@ exports.update = function (request, reply) {
 	delete request.payload.roles;
 
 
-	User.findOne({id: reqUser.id}, function(err, user) {
+	User.findOne({id: reqUser.id}, function (err, user) {
 
 		if (user) {
 			// Merge existing user
@@ -34,15 +34,16 @@ exports.update = function (request, reply) {
 
 				if (err) {
 					return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+
 				} else {
 					request.session.set(request.server.app.sessionName, user);
 					reply(user);
+
 				}
 			});
 		} else {
 			reply(Boom.badRequest('User is not signed in'));
 		}
-
 	});
 
 };

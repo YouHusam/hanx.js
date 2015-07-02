@@ -12,7 +12,7 @@ var _ 						= require('lodash'),
 /**
  * Signup
  */
-exports.signup = function(request, reply) {
+exports.signup = function (request, reply) {
 
 	// For security measurement we remove the roles from the request.body object
 	delete request.payload.roles;
@@ -26,7 +26,7 @@ exports.signup = function(request, reply) {
 	user.displayName = user.firstName + ' ' + user.lastName;
 
 	// Then save the user
-	user.save(function(err) {
+	user.save(function (err) {
 		if (err) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 		} else {
@@ -43,7 +43,7 @@ exports.signup = function(request, reply) {
 /**
  * Local Signin
  */
-exports.signin = function(request, reply) {
+exports.signin = function (request, reply) {
 
 	if (!request.auth.isAuthenticated) {
 
@@ -52,7 +52,7 @@ exports.signin = function(request, reply) {
 
 		User.findOne({
 			username: username
-		}, function(err, user) {
+		}, function (err, user) {
 
 			if (err) {
 				return reply(Boom.unauthorized('Username or password are wrong'));
@@ -80,7 +80,7 @@ exports.signin = function(request, reply) {
 /**
  * Signout
  */
-exports.signout = function(request, reply) {
+exports.signout = function (request, reply) {
 
 	request.session.clear(request.server.app.sessionName);
 	reply.redirect('/');
@@ -89,7 +89,7 @@ exports.signout = function(request, reply) {
 /**
  * OAuth callback
  */
-exports.oauthCallback = function(request, reply) {
+exports.oauthCallback = function (request, reply) {
 
 	if (!request.auth.isAuthenticated) {
 		return reply.redirect('/#!/signin');
@@ -101,7 +101,7 @@ exports.oauthCallback = function(request, reply) {
 /**
  * Helper function to save or update a OAuth user profile
  */
-exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
+exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
 	if (request.auth.isAuthenticated) {
 		// Define a search query fields
@@ -122,7 +122,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 			$or: [mainProviderSearchQuery, additionalProviderSearchQuery]
 		};
 
-		User.findOne(searchQuery, function(err, user) {
+		User.findOne(searchQuery, function (err, user) {
 
 			if (err) {
 				return done(err);
@@ -130,7 +130,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 				if (!user) {
 					var possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
 
-					User.findUniqueUsername(possibleUsername, null, function(availableUsername) {
+					User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
 
 						user = new User({
 							firstName: providerUserProfile.firstName,
@@ -143,7 +143,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 						});
 
 						// And save the user
-						user.save(function(err) {
+						user.save(function (err) {
 
 							return done(err, user);
 						});
@@ -169,7 +169,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 				user.markModified('additionalProvidersData');
 
 				// And save the user
-				user.save(function(err) {
+				user.save(function (err) {
 
 					return done(err, user, '/#!/settings/accounts');
 				});
@@ -184,7 +184,7 @@ exports.saveOAuthUserProfile = function(request, providerUserProfile, done) {
 /**
  * Remove OAuth provider
  */
-exports.removeOAuthProvider = function(request, reply, next) {
+exports.removeOAuthProvider = function (request, reply, next) {
 
 	var user = request.session.get(request.server.app.sessionName);
 	var provider = request.params.provider;
@@ -198,11 +198,11 @@ exports.removeOAuthProvider = function(request, reply, next) {
 			user.markModified('additionalProvidersData');
 		}
 
-		user.save(function(err) {
+		user.save(function (err) {
 			if (err) {
 				return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 			} else {
-				request.login(user, function(err) {
+				request.login(user, function (err) {
 					if (err) {
 						reply(Boom.badRequest(err));
 					} else {

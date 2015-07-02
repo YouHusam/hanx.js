@@ -12,7 +12,7 @@ var Fs 			= require('fs'),
 		Boom 		= require('boom'),
 		Path 		= require('path');
 
-module.exports = function(db) {
+module.exports = function (db) {
 
 	// Initialize hapi app
 	var server = new Hapi.Server();
@@ -22,7 +22,7 @@ module.exports = function(db) {
 	server.app.sessionName = Config.sessionName;
 
 	// Globbing model files
-	Config.getGlobbedFiles('./app/models/**/*.js').forEach(function(modelPath) {
+	Config.getGlobbedFiles('./app/models/**/*.js').forEach(function (modelPath) {
 		require(Path.resolve(modelPath));
 	});
 
@@ -48,7 +48,7 @@ module.exports = function(db) {
 				}
 			}
 	 }
-	], function(err) {
+	], function (err) {
 		if (err) {
 			console.error(err);
 		}
@@ -98,7 +98,7 @@ module.exports = function(db) {
 	require('./strategies')(server);
 
 	// Globbing routing files
-	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function(routePath) {
+	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function (routePath) {
 		require(Path.resolve(routePath))(server);
 	});
 

@@ -11,7 +11,7 @@ var Config = require('./config');
  */
 module.exports = {
 
-	getLogReporters: function() {
+	getLogReporters: function () {
 
 		var reporters = [
 			{

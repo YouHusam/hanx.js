@@ -13,17 +13,18 @@ var Init = require('./config/init')(),
  */
 
 // Bootstrap db connection
-var db = Mongoose.connect(Config.db.uri, Config.db.options, function(err) {
+var db = Mongoose.connect(Config.db.uri, Config.db.options, function (err) {
+
 	if (err) {
 		console.error(Chalk.red('Could not connect to MongoDB!'));
 		console.log(Chalk.red(err));
 	}
 });
-Mongoose.connection.on('error', function(err) {
+Mongoose.connection.on('error', function (err) {
+
 	console.error(Chalk.red('MongoDB connection error: ' + err));
 	process.exit(-1);
-	}
-);
+});
 
 // Init the express application
 var server = require('./config/hapi')(db);

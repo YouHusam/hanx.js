@@ -3,13 +3,14 @@
 /**
  * Module dependencies.
  */
-var glob = require('glob'),
-	chalk = require('chalk');
+var glob 	= require('glob'),
+		chalk = require('chalk');
 
 /**
  * Module init function.
  */
-module.exports = function() {
+module.exports = function () {
+
 	/**
 	 * Before we begin, lets set the environment variable
 	 * We'll Look for a valid NODE_ENV variable and if one cannot be found load the development NODE_ENV

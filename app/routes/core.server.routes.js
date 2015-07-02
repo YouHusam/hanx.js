@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function(server) {
+module.exports = function (server) {
 
 	// Root routing
 	var core = require('../../app/controllers/core.server.controller');

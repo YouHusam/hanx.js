@@ -8,7 +8,7 @@ var Boom = require('boom');
 /**
  * Module init function.
  */
-module.exports = function(server) {
+module.exports = function (server) {
 
 	// Session Configuration
 	var sessionConfig = {

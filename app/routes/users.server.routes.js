@@ -4,7 +4,8 @@
  * Module dependencies.
  */
 
-module.exports = function(server) {
+module.exports = function (server) {
+
 	// User Routes
 	var users = require('../../app/controllers/users.server.controller');
 

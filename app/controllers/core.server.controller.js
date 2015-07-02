@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-exports.index = function(request, reply) {
+exports.index = function (request, reply) {
 
 	var user = request.auth.credentials;
 	reply.view('index', {
