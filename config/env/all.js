@@ -32,11 +32,11 @@ module.exports = {
 	// The session cookie name
 	sessionName: 'login',
 	log: {
-		// Can specify one of 'combined', 'common', 'dev', 'short', 'tiny'
-		format: 'combined',
+		enabled: true,
 		// Stream defaults to process.stdout
 		// Uncomment to enable logging to a log on the file system
 		options: {
+			console: '*',
 			stream: 'access.log'
 		}
 	},

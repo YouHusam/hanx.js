@@ -14,11 +14,15 @@ module.exports = {
 	getLogReporters: function () {
 
 		var reporters = [
-			{
-				reporter: require('good-console'),
-				events: { response: '*' }
-			}
+
 		];
+
+		if ('console' in Config.log.options) {
+			reporters.push({
+					reporter: require('good-console'),
+					events: { response: Config.log.options.events }
+			});
+		}
 
 		if ('stream' in Config.log.options) {
 			reporters.push({

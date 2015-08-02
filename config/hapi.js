@@ -32,14 +32,7 @@ module.exports = function (db) {
 		require(Path.resolve(modelPath));
 	});
 
-	// Register plugins
-	server.register([
-		/*{
-			register: require('good'),
-			options: {
-				reporters: Logger.getLogReporters()
-			}
-		},*/
+	var plugins =[
 		{ register: require('bell') },
 		{
 			register: require('yar'),
@@ -54,7 +47,19 @@ module.exports = function (db) {
 				}
 			}
 	 }
-	], function (err) {
+	];
+
+	if (Config.log.enabled) {
+		plugins.push(		{
+			register: require('good'),
+			options: {
+				reporters: Logger.getLogReporters()
+			}
+		});
+	}
+
+	// Register plugins
+	server.register(plugins, function (err) {
 		if (err) {
 			console.error(err);
 		}
