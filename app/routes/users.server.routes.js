@@ -41,7 +41,10 @@ module.exports = function (server) {
 	{
 		path: '/users/password',
 		method: 'POST',
-		handler: users.changePassword
+		config: {
+			handler: users.changePassword,
+			auth: 'session'
+		}
 	},
 	{
 		path: '/auth/forgot',

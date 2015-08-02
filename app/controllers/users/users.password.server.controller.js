@@ -194,9 +194,9 @@ exports.changePassword = function (request, reply) {
 	// Init Variables
 	var passwordDetails = request.payload;
 
-	if (request.payload.user) {
+	if (request.auth.isAuthenticated) {
 		if (passwordDetails.newPassword) {
-			User.findById(request.user.id, function (err, user) {
+			User.findById(request.auth.credentials.id, function (err, user) {
 
 				if (!err && user) {
 					if (user.authenticate(passwordDetails.currentPassword)) {
@@ -209,17 +209,29 @@ exports.changePassword = function (request, reply) {
 									return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 
 								} else {
-									request.login(user, function (err) {
 
-										if (err) {
-											reply(Boom.badRequest(err));
+									// Clear session
+									request.session.clear(request.server.app.sessionName);
 
-										} else {
-											reply({
-												message: 'Password changed successfully'
-											});
-										}
-									});
+									// Copy user and remove sensetive and useless data
+									var authedUser = {};
+									authedUser._id = user._id.toString();
+									authedUser.id = user._id;
+									authedUser.displayName = user.displayName;
+									authedUser.provider = user.provider;
+									authedUser.username = user.username;
+									authedUser.created = user.created;
+									authedUser.roles = user.roles;
+									authedUser.email = user.email;
+									authedUser.lastName = user.lastName;
+									authedUser.firstName = user.firstName;
+									if(authedUser !== {}){
+										// Create a new session to login the user
+										request.session.set(request.server.app.sessionName, authedUser);
+										reply({
+											message: 'Password changed successfully'
+										});
+									}
 								}
 							});
 						} else {
