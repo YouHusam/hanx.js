@@ -15,7 +15,7 @@ var mongoose = require('mongoose'),
 exports.create = function (request, reply) {
 
 	var article = new Article(request.payload);
-	article.user = request.session.get(request.server.app.sessionName);
+	article.user = request.auth.credentials;
 
 	article.save(function (err) {
 		if (err) {
@@ -114,7 +114,8 @@ exports.articleByID = function (request, reply) {
  */
 exports.hasAuthorization = function (request, reply) {
 
-	if (request.pre.article.user.id !== request.session.get(request.server.app.sessionName)._id) {
+	if (request.pre.article.user.id !==
+			request.auth.credentials._id) {
 		return reply(Boom.forbidden('User is not authorized'));
 	}
 	reply();

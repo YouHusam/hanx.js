@@ -1,12 +1,11 @@
 'use strict';
 
-var should = require('should'),
-	request = require('supertest'),
-	app = require('../../server'),
-	mongoose = require('mongoose'),
-	User = mongoose.model('User'),
-	Article = mongoose.model('Article'),
-	agent = request.agent(app);
+var Should 		= require('should'),
+		Code 			= require('code'),
+		Server 		= require('../../server'),
+		Mongoose 	= require('mongoose'),
+		User 			= Mongoose.model('User'),
+		Article 	= Mongoose.model('Article');
 
 /**
  * Globals
@@ -17,6 +16,7 @@ var credentials, user, article;
  * Article routes tests
  */
 describe('Article CRUD tests', function() {
+
 	beforeEach(function(done) {
 		// Create user credentials
 		credentials = {
@@ -47,82 +47,93 @@ describe('Article CRUD tests', function() {
 	});
 
 	it('should be able to save an article if logged in', function(done) {
-		agent.post('/auth/signin')
-			.send(credentials)
-			.expect(200)
-			.end(function(signinErr, signinRes) {
-				// Handle signin error
-				if (signinErr) done(signinErr);
 
-				// Get the userId
-				var userId = user.id;
+		Server.inject({
+			method: 'POST',
+			url: '/auth/signin',
+			payload: credentials
+		}, function(response) {
 
-				// Save a new article
-				agent.post('/articles')
-					.send(article)
-					.expect(200)
-					.end(function(articleSaveErr, articleSaveRes) {
-						// Handle article save error
-						if (articleSaveErr) done(articleSaveErr);
+			Code.expect(response.statusCode, response.result.message).to.equal(200);
+			if(response.result.error)
+				done(new Error(response.result.message));
 
-						// Get a list of articles
-						agent.get('/articles')
-							.end(function(articlesGetErr, articlesGetRes) {
-								// Handle article save error
-								if (articlesGetErr) done(articlesGetErr);
+			// Get the userID
+			var userId = user.id;
 
-								// Get articles list
-								var articles = articlesGetRes.body;
 
-								// Set assertions
-								(articles[0].user._id).should.equal(userId);
-								(articles[0].title).should.match('Article Title');
+			// Save a new article
+			Server.inject({
+				method: 'POST',
+				url: '/articles',
+				payload: article,
+				credentials: user
+			}, function(response) {
 
-								// Call the assertion callback
-								done();
-							});
-					});
+				Code.expect(response.statusCode, response.result.message).to.equal(200);
+				if(response.result.error)
+					done(new Error(response.result.message));
+
+				// Get a list of articles
+				Server.inject({
+					method: 'GET',
+					url: '/articles',
+					credntials: user
+				}, function(response) {
+
+					// Handle article getting error
+					if(response.result.error)
+						done(new Error(response.result.message));
+
+					// Get Articles list
+					var articles = response.result;
+
+					// Set assertions
+					Code.expect(articles[0].user._id.toString()).to.equal(userId);
+					Code.expect(articles[0].title).to.equal('Article Title');
+
+					// Call the assertion callback
+					done();
+				});
 			});
+		});
 	});
 
 	it('should not be able to save an article if not logged in', function(done) {
-		agent.post('/articles')
-			.send(article)
-			.expect(401)
-			.end(function(articleSaveErr, articleSaveRes) {
-				// Call the assertion callback
-				done(articleSaveErr);
-			});
+
+		Server.inject({
+			method: 'POST',
+			url: '/articles',
+			payload: article
+		}, function(response) {
+
+			Code.expect(response.statusCode, response.result.message).to.equal(401);
+			done();
+		});
 	});
 
 	it('should not be able to save an article if no title is provided', function(done) {
+
 		// Invalidate title field
 		article.title = '';
 
-		agent.post('/auth/signin')
-			.send(credentials)
-			.expect(200)
-			.end(function(signinErr, signinRes) {
-				// Handle signin error
-				if (signinErr) done(signinErr);
+		// Save a new article
+		Server.inject({
+			method: 'POST',
+			url: '/articles',
+			credentials: user
+		}, function(response) {
 
-				// Get the userId
-				var userId = user.id;
+			Code.expect(response.statusCode, response.result.message).to.equal(400);
 
-				// Save a new article
-				agent.post('/articles')
-					.send(article)
-					.expect(400)
-					.end(function(articleSaveErr, articleSaveRes) {
-						// Set message assertion
-						(articleSaveRes.body.message).should.match('Title cannot be blank');
+			// Set message assertion
+			Code.expect(response.result.message).to.equal('Title cannot be blank');
 
-						// Handle article save error
-						done(articleSaveErr);
-					});
-			});
+			// Handle article save error
+			done();
+		});
 	});
-
+/*
 	it('should be able to update an article if signed in', function(done) {
 		agent.post('/auth/signin')
 			.send(credentials)
@@ -270,7 +281,7 @@ describe('Article CRUD tests', function() {
 			});
 
 		});
-	});
+	});*/
 
 	afterEach(function(done) {
 		User.remove().exec(function() {

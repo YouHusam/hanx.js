@@ -14,8 +14,14 @@ var Fs 			= require('fs'),
 
 module.exports = function (db) {
 
+	var serverOptions = {
+		cache:{
+			engine: require('catbox-mongodb')
+		}
+	};
+
 	// Initialize hapi app
-	var server = new Hapi.Server();
+	var server = new Hapi.Server(serverOptions);
 	server.connection({port: Config.port});
 
 	// Setup global variables
@@ -28,12 +34,12 @@ module.exports = function (db) {
 
 	// Register plugins
 	server.register([
-		{
+		/*{
 			register: require('good'),
 			options: {
 				reporters: Logger.getLogReporters()
 			}
-		},
+		},*/
 		{ register: require('bell') },
 		{
 			register: require('yar'),

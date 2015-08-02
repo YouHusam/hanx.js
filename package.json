@@ -42,7 +42,7 @@
     "yar": "~3.0.3"
   },
   "devDependencies": {
-    "supertest": "~1.0.1",
+    "code": "~1.5.0",
     "should": "~6.0.3",
     "grunt-env": "~0.4.4",
     "grunt-node-inspector": "~0.2.0",
