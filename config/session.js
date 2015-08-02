@@ -23,7 +23,7 @@ module.exports = function (server) {
 
 				var session = request.state[options.sessionName];
 				if(!session){
-					return reply(Boom.unauthorized('Not authorised'));
+					return reply(Boom.unauthorized('User is not logged in'));
 				}
 
 				if(session.id !== request.session.id){

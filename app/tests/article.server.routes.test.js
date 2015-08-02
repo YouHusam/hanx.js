@@ -48,53 +48,41 @@ describe('Article CRUD tests', function() {
 
 	it('should be able to save an article if logged in', function(done) {
 
+		// Save a new article
 		Server.inject({
 			method: 'POST',
-			url: '/auth/signin',
-			payload: credentials
+			url: '/articles',
+			payload: article,
+			credentials: user
 		}, function(response) {
+
+			// Get the userID
+			var userId = user.id;
 
 			Code.expect(response.statusCode, response.result.message).to.equal(200);
 			if(response.result.error)
 				done(new Error(response.result.message));
 
-			// Get the userID
-			var userId = user.id;
-
-
-			// Save a new article
+			// Get a list of articles
 			Server.inject({
-				method: 'POST',
+				method: 'GET',
 				url: '/articles',
-				payload: article,
-				credentials: user
+				credntials: user
 			}, function(response) {
 
-				Code.expect(response.statusCode, response.result.message).to.equal(200);
+				// Handle article getting error
 				if(response.result.error)
 					done(new Error(response.result.message));
 
-				// Get a list of articles
-				Server.inject({
-					method: 'GET',
-					url: '/articles',
-					credntials: user
-				}, function(response) {
+				// Get Articles list
+				var articles = response.result;
 
-					// Handle article getting error
-					if(response.result.error)
-						done(new Error(response.result.message));
+				// Set assertions
+				Code.expect(articles[0].user._id.toString()).to.equal(userId);
+				Code.expect(articles[0].title).to.equal('Article Title');
 
-					// Get Articles list
-					var articles = response.result;
-
-					// Set assertions
-					Code.expect(articles[0].user._id.toString()).to.equal(userId);
-					Code.expect(articles[0].title).to.equal('Article Title');
-
-					// Call the assertion callback
-					done();
-				});
+				// Call the assertion callback
+				done();
 			});
 		});
 	});
@@ -204,32 +192,42 @@ describe('Article CRUD tests', function() {
 
 		});
 	});
-/*
-
-
 
 	it('should be able to get a single article if not signed in', function(done) {
+
 		// Create new article model instance
 		var articleObj = new Article(article);
 
 		// Save the article
 		articleObj.save(function() {
-			request(app).get('/articles/' + articleObj._id)
-				.end(function(req, res) {
-					// Set assertion
-					res.body.should.be.an.Object.with.property('title', article.title);
 
-					// Call the assertion callback
-					done();
-				});
+			Server.inject({
+				method: 'GET',
+				url: '/articles/' + articleObj._id.toString()
+			}, function(response) {
+
+				// Set assertion
+				// For some reason it returns document object instead of normal object
+				Code.expect(response.result.toJSON()).to.be.an.object().
+					and.to.include({'title': article.title});
+
+				// Call the assertion callback
+				done();
+			});
 		});
 	});
 
-	it('should return proper error for single article which doesnt exist, if not signed in', function(done) {
-		request(app).get('/articles/test')
-			.end(function(req, res) {
+	it('should return proper error for single article which doesnt exist, if not signed in',
+		function(done) {
+
+			Server.inject({
+				method: 'GET',
+				url: '/articles/test'
+			}, function(response) {
+
 				// Set assertion
-				res.body.should.be.an.Object.with.property('message', 'Article is invalid');
+				Code.expect(response.result).to.be.an.object().
+					and.to.include({'message': 'Article is invalid'});
 
 				// Call the assertion callback
 				done();
@@ -237,43 +235,46 @@ describe('Article CRUD tests', function() {
 	});
 
 	it('should be able to delete an article if signed in', function(done) {
-		agent.post('/auth/signin')
-			.send(credentials)
-			.expect(200)
-			.end(function(signinErr, signinRes) {
-				// Handle signin error
-				if (signinErr) done(signinErr);
 
-				// Get the userId
-				var userId = user.id;
+		Server.inject({
+			method: 'POST',
+			url: '/articles',
+			credentials: user,
+			payload: article
+		}, function(articleSaveRes) {
 
-				// Save a new article
-				agent.post('/articles')
-					.send(article)
-					.expect(200)
-					.end(function(articleSaveErr, articleSaveRes) {
-						// Handle article save error
-						if (articleSaveErr) done(articleSaveErr);
+			Code.expect(articleSaveRes.statusCode,
+				articleSaveRes.result.message).to.equal(200);
 
-						// Delete an existing article
-						agent.delete('/articles/' + articleSaveRes.body._id)
-							.send(article)
-							.expect(200)
-							.end(function(articleDeleteErr, articleDeleteRes) {
-								// Handle article error error
-								if (articleDeleteErr) done(articleDeleteErr);
+			// Handle article save error
+			if(articleSaveRes.result.error)
+				done(new Error(articleSaveRes.result.message));
 
-								// Set assertions
-								(articleDeleteRes.body._id).should.equal(articleSaveRes.body._id);
+			Server.inject({
+				method: 'DELETE',
+				url: '/articles/' + articleSaveRes.result._id,
+				credentials: user,
+				payload: article
+			}, function(articleDeleteRes) {
 
-								// Call the assertion callback
-								done();
-							});
-					});
+				Code.expect(articleDeleteRes.statusCode,
+					articleDeleteRes.result.message).to.equal(200);
+
+				// Handle article save error
+				if(articleDeleteRes.result.error)
+					done(new Error(articleDeleteRes.result.message));
+
+			// Set assertions
+			Code.expect(articleDeleteRes.result._id.toString())
+				.to.be.equal(articleSaveRes.result._id.toString());
+
+			done();
 			});
+		});
 	});
 
 	it('should not be able to delete an article if not signed in', function(done) {
+
 		// Set article user
 		article.user = user;
 
@@ -282,19 +283,23 @@ describe('Article CRUD tests', function() {
 
 		// Save the article
 		articleObj.save(function() {
+
 			// Try deleting article
-			request(app).delete('/articles/' + articleObj._id)
-			.expect(401)
-			.end(function(articleDeleteErr, articleDeleteRes) {
+			Server.inject({
+				method: 'DELETE',
+				url: '/articles/' + articleObj._id
+			},function(response) {
+
+				Code.expect(response.statusCode, response.result.message).to.be.equal(401);
 				// Set message assertion
-				(articleDeleteRes.body.message).should.match('User is not logged in');
+
+				Code.expect(response.result.message).to.be.equal('User is not logged in');
 
 				// Handle article error error
-				done(articleDeleteErr);
+				done();
 			});
-
 		});
-	});*/
+	});
 
 	afterEach(function(done) {
 		User.remove().exec(function() {
