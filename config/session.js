@@ -33,7 +33,6 @@ module.exports = function (server) {
 				if (!request.session.get(options.sessionName)) {
 					return reply(Boom.unauthorized('Not authorised'));
 				}
-
 				reply.continue({credentials: request.session.get(options.sessionName)});
 			}
 		};

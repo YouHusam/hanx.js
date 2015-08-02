@@ -14,6 +14,8 @@ var _ 						= require('lodash'),
  */
 exports.update = function (request, reply) {
 
+	//TODO: FIX PASSWORD RESAVE
+
 	// Init Variables
 	var reqUser = request.auth.credentials;
 	var message = null;

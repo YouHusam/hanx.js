@@ -49,13 +49,16 @@ exports.signin = function (request, reply) {
 
 		var username = request.payload.username;
 		var password = request.payload.password;
+		if (!username || !password) {
+			return reply(Boom.unauthorized('Username and password should not be blank'));
+		}
 
 		User.findOne({
 			username: username
 		}, function (err, user) {
 
 			if (err) {
-				return reply(Boom.unauthorized('Username or password are wrong'));
+				return reply(Boom.unauthorized(err));
 			}
 			if (!user) {
 				return reply(Boom.unauthorized('Username or password are wrong'));
@@ -64,16 +67,26 @@ exports.signin = function (request, reply) {
 				return reply(Boom.unauthorized('Username or password are wrong'));
 			}
 
-			// Remove sensitive data before login
-			delete user.password;
-			delete user.salt;
-			request.session.set(request.server.app.sessionName, user);
-			reply(user);
+			// Copy user and remove sensetive and useless data
+			var authedUser = {};
+			authedUser._id = user._id;
+			authedUser.id = user._id;
+			authedUser.displayName = user.displayName;
+			authedUser.provider = user.provider;
+			authedUser.username = user.username;
+			authedUser.created = user.created;
+			authedUser.roles = user.roles;
+			authedUser.email = user.email;
+			authedUser.lastName = user.lastName;
+			authedUser.firstName = user.firstName;
+			if(authedUser !== {}){
+				request.session.set(request.server.app.sessionName, authedUser);
+				return reply(authedUser);
+			}
 		});
 	} else {
-
 		var user = request.auth.credentials;
-		reply(user);
+		return reply.redirect('/', user);
 	}
 };
 
@@ -149,7 +162,20 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 						});
 					});
 				} else {
-					return done(err, user);
+
+					// Remove unwanted data from user
+					var authedUser = {};
+					authedUser._id = user._id;
+					authedUser.displayName = user.displayName;
+					authedUser.provider = user.provider;
+					authedUser.username = user.username;
+					authedUser.created = user.created;
+					authedUser.roles = user.roles;
+					authedUser.email = user.email;
+					authedUser.lastName = user.lastName;
+					authedUser.firstName = user.firstName;
+
+					return done(err, authedUser);
 				}
 			}
 		});

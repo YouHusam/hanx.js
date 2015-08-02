@@ -110,10 +110,6 @@ module.exports = function (db) {
 				return reply.view('404', {
 					url: request.url.path
 				});
-
-			// Set 401 errors to redirect to the signin page
-			if(request.response.output.statusCode === 401)
-				return reply.redirect('/#!/signin');
 		}
 		return reply.continue();
 	});

@@ -70,16 +70,16 @@ module.exports = function (server) {
 		method: 'POST',
 		config:{
 			handler: users.signin,
-			// auth: 'session'
-		}
+			auth:
+			{
+				mode: 'try',
+				strategy: 'session'}
+			}
 	},
 	{
 		path: '/auth/signout',
 		method: 'GET',
-		config:{
-			handler: users.signout,
-			auth: 'session'
-		}
+		handler: users.signout,
 	},
 
 	// Setting the facebook oauth routes
