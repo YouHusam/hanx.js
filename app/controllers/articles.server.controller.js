@@ -114,8 +114,8 @@ exports.articleByID = function (request, reply) {
  */
 exports.hasAuthorization = function (request, reply) {
 
-	if (request.pre.article.user.id !==
-			request.auth.credentials._id) {
+	if (request.pre.article.user.id.toString() !==
+			request.auth.credentials._id.toString()) {
 		return reply(Boom.forbidden('User is not authorized'));
 	}
 	reply();

@@ -133,66 +133,79 @@ describe('Article CRUD tests', function() {
 			done();
 		});
 	});
-/*
+
 	it('should be able to update an article if signed in', function(done) {
-		agent.post('/auth/signin')
-			.send(credentials)
-			.expect(200)
-			.end(function(signinErr, signinRes) {
-				// Handle signin error
-				if (signinErr) done(signinErr);
 
-				// Get the userId
-				var userId = user.id;
+		Server.inject({
+			method: 'POST',
+			url: '/articles',
+			credentials: user,
+			payload: article
+		}, function(saveResponse) {
 
-				// Save a new article
-				agent.post('/articles')
-					.send(article)
-					.expect(200)
-					.end(function(articleSaveErr, articleSaveRes) {
-						// Handle article save error
-						if (articleSaveErr) done(articleSaveErr);
+			// Get the userId
+			var userId = user.id;
 
-						// Update article title
-						article.title = 'WHY YOU GOTTA BE SO MEAN?';
+			Code.expect(saveResponse.statusCode,
+				saveResponse.result.message).to.equal(200);
 
-						// Update an existing article
-						agent.put('/articles/' + articleSaveRes.body._id)
-							.send(article)
-							.expect(200)
-							.end(function(articleUpdateErr, articleUpdateRes) {
-								// Handle article update error
-								if (articleUpdateErr) done(articleUpdateErr);
+			// Handle article save error
+			if(saveResponse.result.error)
+				done(new Error(saveResponse.result.message));
 
-								// Set assertions
-								(articleUpdateRes.body._id).should.equal(articleSaveRes.body._id);
-								(articleUpdateRes.body.title).should.match('WHY YOU GOTTA BE SO MEAN?');
+			// Update article title
+			article.title = 'WHY YOU GOTTA BE SO MEAN?';
 
-								// Call the assertion callback
-								done();
-							});
-					});
+			Server.inject({
+				method: 'PUT',
+				url:'/articles/' + saveResponse.result._id.toString(),
+				credentials: user,
+				payload: article
+			}, function(updateResponse) {
+
+				Code.expect(updateResponse.statusCode,
+					updateResponse.result.message).to.equal(200);
+
+				// Handle article save error
+				if(updateResponse.result.error)
+					done(new Error(updateResponse.result.message));
+
+				// Set assertions
+				Code.expect(updateResponse.result._id.toString())
+						.to.equal(saveResponse.result._id.toString());
+				Code.expect(updateResponse.result.title).to.equal('WHY YOU GOTTA BE SO MEAN?');
+
+				done();
+
 			});
+		});
 	});
 
 	it('should be able to get a list of articles if not signed in', function(done) {
+
 		// Create new article model instance
 		var articleObj = new Article(article);
 
 		// Save the article
 		articleObj.save(function() {
-			// Request articles
-			request(app).get('/articles')
-				.end(function(req, res) {
-					// Set assertion
-					res.body.should.be.an.Array.with.lengthOf(1);
 
-					// Call the assertion callback
-					done();
-				});
+			// Request articles
+			Server.inject({
+				method: 'GET',
+				url: '/articles'
+			}, function(response) {
+
+				// Set assertion
+				Code.expect(response.result).to.be.an.array().and.to.have.length(1);
+
+				// Call the assertion callback
+				done();
+			});
 
 		});
 	});
+/*
+
 
 
 	it('should be able to get a single article if not signed in', function(done) {
