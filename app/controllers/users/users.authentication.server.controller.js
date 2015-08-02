@@ -69,7 +69,7 @@ exports.signin = function (request, reply) {
 
 			// Copy user and remove sensetive and useless data
 			var authedUser = {};
-			authedUser._id = user._id;
+			authedUser._id = user._id.toString();
 			authedUser.id = user._id;
 			authedUser.displayName = user.displayName;
 			authedUser.provider = user.provider;
