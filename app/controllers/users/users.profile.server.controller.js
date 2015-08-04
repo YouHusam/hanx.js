@@ -22,9 +22,9 @@ exports.update = function (request, reply) {
 
 	// For security measurement we remove the roles from the request.body object
 	delete request.payload.roles;
+	delete reqUser.id;
 
-
-	User.findOne({id: reqUser.id}, function (err, user) {
+	User.findOne(reqUser, function (err, user) {
 
 		if (user) {
 			// Merge existing user
@@ -38,9 +38,11 @@ exports.update = function (request, reply) {
 					return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 
 				} else {
-					request.session.set(request.server.app.sessionName, user);
-					reply(user);
+					var authedUser = require('./users.authentication.server.controller.js')
+							.cleanUser(user);
 
+					request.session.set(request.server.app.sessionName, authedUser);
+					return reply(authedUser);
 				}
 			});
 		} else {
@@ -55,6 +57,6 @@ exports.update = function (request, reply) {
  */
 exports.me = function (request, reply) {
 
- var user = request.auth.credentials;
-	reply({user: user});
+	var user = request.auth.credentials;
+		reply({user: user});
 };
