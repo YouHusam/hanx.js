@@ -76,8 +76,9 @@ module.exports = function (server) {
 			auth:
 			{
 				mode: 'try',
-				strategy: 'session'}
+				strategy: 'session'
 			}
+		}
 	},
 	{
 		path: '/auth/signout',

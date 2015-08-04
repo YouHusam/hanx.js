@@ -11,6 +11,7 @@ var _ 						= require('lodash'),
 		Config 				= require('../../../config/config'),
 		Nodemailer 		= require('nodemailer'),
 		Async 				= require('async'),
+		cleanUser			= require('./users.authentication.server.controller.js').cleanUser,
 		Crypto 				= require('crypto');
 
 var smtpTransport = Nodemailer.createTransport(Config.mailer.options);
@@ -101,6 +102,7 @@ exports.validateResetToken = function (request, reply) {
 			$gt: Date.now()
 		}
 	}, function (err, user) {
+
 		if (!user) {
 			return reply.redirect('/#!/password/reset/invalid');
 		}
@@ -120,12 +122,14 @@ exports.reset = function (request, reply) {
 	Async.waterfall([
 
 		function (done) {
+
 			User.findOne({
 				resetPasswordToken: request.params.token,
 				resetPasswordExpires: {
 					$gt: Date.now()
 				}
 			}, function (err, user) {
+
 				if (!err && user) {
 					if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
 						user.password = passwordDetails.newPassword;
@@ -133,19 +137,20 @@ exports.reset = function (request, reply) {
 						user.resetPasswordExpires = undefined;
 
 						user.save(function (err) {
+
 							if (err) {
 								return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 							} else {
-								request.login(user, function (err) {
-									if (err) {
-										reply(Boom.badRequest(err));
-									} else {
-										// Return authenticated user
-										reply(user);
+								// Clear session
+								request.session.clear(request.server.app.sessionName);
 
-										done(err, user);
-									}
-								});
+								// Copy user and remove sensetive and useless data
+								var authedUser = cleanUser(user);
+								if(authedUser !== {}){
+									// Create a new session to login the user
+									request.session.set(request.server.app.sessionName, authedUser);
+									reply(authedUser);
+								}
 							}
 						});
 					} else {
@@ -162,6 +167,7 @@ exports.reset = function (request, reply) {
 				name: user.displayName,
 				appName: Config.app.title
 			}, function (err, emailHTML) {
+
 				done(err, emailHTML, user);
 			});
 		},
@@ -214,17 +220,7 @@ exports.changePassword = function (request, reply) {
 									request.session.clear(request.server.app.sessionName);
 
 									// Copy user and remove sensetive and useless data
-									var authedUser = {};
-									authedUser._id = user._id.toString();
-									authedUser.id = user._id;
-									authedUser.displayName = user.displayName;
-									authedUser.provider = user.provider;
-									authedUser.username = user.username;
-									authedUser.created = user.created;
-									authedUser.roles = user.roles;
-									authedUser.email = user.email;
-									authedUser.lastName = user.lastName;
-									authedUser.firstName = user.firstName;
+									var authedUser = cleanUser(user);
 									if(authedUser !== {}){
 										// Create a new session to login the user
 										request.session.set(request.server.app.sessionName, authedUser);

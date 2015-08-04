@@ -41,6 +41,29 @@ exports.signup = function (request, reply) {
 };
 
 /**
+ * Clean useless data from the user object
+ */
+var cleanUser = function (user) {
+
+	// Copy user and remove sensetive and useless data
+	var cleanedUser = {};
+	cleanedUser._id = user._id.toString();
+	cleanedUser.id = user._id;
+	cleanedUser.displayName = user.displayName;
+	cleanedUser.provider = user.provider;
+	cleanedUser.username = user.username;
+	cleanedUser.created = user.created;
+	cleanedUser.roles = user.roles;
+	cleanedUser.email = user.email;
+	cleanedUser.lastName = user.lastName;
+	cleanedUser.firstName = user.firstName;
+
+	return cleanedUser;
+};
+
+exports.cleanUser = cleanUser;
+
+/**
  * Local Signin
  */
 exports.signin = function (request, reply) {
@@ -67,18 +90,7 @@ exports.signin = function (request, reply) {
 				return reply(Boom.unauthorized('Username or password are wrong'));
 			}
 
-			// Copy user and remove sensetive and useless data
-			var authedUser = {};
-			authedUser._id = user._id.toString();
-			authedUser.id = user._id;
-			authedUser.displayName = user.displayName;
-			authedUser.provider = user.provider;
-			authedUser.username = user.username;
-			authedUser.created = user.created;
-			authedUser.roles = user.roles;
-			authedUser.email = user.email;
-			authedUser.lastName = user.lastName;
-			authedUser.firstName = user.firstName;
+			var authedUser = cleanUser(user);
 			if(authedUser !== {}){
 				request.session.set(request.server.app.sessionName, authedUser);
 				return reply(authedUser);
@@ -164,16 +176,7 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 				} else {
 
 					// Remove unwanted data from user
-					var authedUser = {};
-					authedUser._id = user._id;
-					authedUser.displayName = user.displayName;
-					authedUser.provider = user.provider;
-					authedUser.username = user.username;
-					authedUser.created = user.created;
-					authedUser.roles = user.roles;
-					authedUser.email = user.email;
-					authedUser.lastName = user.lastName;
-					authedUser.firstName = user.firstName;
+					var authedUser = cleanUser(user);
 
 					return done(err, authedUser);
 				}
