@@ -1,4 +1,4 @@
-![HANX.JS Logo](https://lh3.googleusercontent.com/9Ptqv6OnMH_5bG7LC2ndj4EkLQoXmI6vWRJfTZXYFjdVE2d_HooexzHDzNTFXLDK8ZaBe-MTHJx8EYw=w1301-h561)
+![HANX.JS Logo](https://lh5.googleusercontent.com/yxgGIqnzL-0OuzSIKEfFx3rBQWknVJxHoS3df0uRN9lBQDhTsKBAMizgEvabysedTDXvFF-f=w1855-h873)
 
 HANX.JS is a port of [MEAN.JS](http://meanjs.org) in [Hapi.JS](http://www.hapijs.com/)
 
