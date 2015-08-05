@@ -1,18 +1,10 @@
-[![MEAN.JS Logo](http://meanjs.org/img/logo-small.png)](http://meanjs.org/)
+![HANX.JS Logo](https://lh5.googleusercontent.com/yxgGIqnzL-0OuzSIKEfFx3rBQWknVJxHoS3df0uRN9lBQDhTsKBAMizgEvabysedTDXvFF-f=w1855-h873)
 
-[![Build Status](https://travis-ci.org/meanjs/mean.svg?branch=master)](https://travis-ci.org/meanjs/mean)
-[![Dependencies Status](https://david-dm.org/meanjs/mean.svg)](https://david-dm.org/meanjs/mean)
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/meanjs/mean?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+HANX.JS is a port of [MEAN.JS](http://meanjs.org) in [Hapi.JS](http://www.hapijs.com/)
 
-MEAN.JS is a full-stack JavaScript open-source solution, which provides a solid starting point for [MongoDB](http://www.mongodb.org/), [Node.js](http://www.nodejs.org/), [Express](http://expressjs.com/), and [AngularJS](http://angularjs.org/) based applications. The idea is to solve the common issues with connecting those frameworks, build a robust framework to support daily development needs, and help developers use better practices while working with popular JavaScript components.
+HAPI.JS is a full-stack JavaScript open-source solution, which provides a solid starting point for [MongoDB](http://www.mongodb.org/), [Node.js](http://www.nodejs.org/), [Hapi](http://hapijs.com/), and [AngularJS](http://angularjs.org/) based applications. The idea is to solve the common issues with connecting those frameworks, build a robust framework to support daily development needs, help developers use better practices while working with popular JavaScript components, and to eliminate the limits of the MEAN stack.
 
-## Before You Begin
-Before you begin we recommend you read about the basic building blocks that assemble a MEAN.JS application:
-* MongoDB - Go through [MongoDB Official Website](http://mongodb.org/) and proceed to their [Official Manual](http://docs.mongodb.org/manual/), which should help you understand NoSQL and MongoDB better.
-* Express - The best way to understand express is through its [Official Website](http://expressjs.com/), which has a [Getting Started](http://expressjs.com/starter/installing.html) guide, as well as an [ExpressJS Guide](http://expressjs.com/guide/error-handling.html) guide for general express topics. You can also go through this [StackOverflow Thread](http://stackoverflow.com/questions/8144214/learning-express-for-node-js) for more resources.
-* AngularJS - Angular's [Official Website](http://angularjs.org/) is a great starting point. You can also use [Thinkster Popular Guide](http://www.thinkster.io/), and the [Egghead Videos](https://egghead.io/).
-* Node.js - Start by going through [Node.js Official Website](http://nodejs.org/) and this [StackOverflow Thread](http://stackoverflow.com/questions/2353818/how-do-i-get-started-with-node-js), which should get you going with the Node.js platform in no time.
-
+MongoDB will be replaced soon with PostgreSQL DB for better performance.
 
 ## Prerequisites
 Make sure you have installed all of the following prerequisites on your development machine:
@@ -31,27 +23,24 @@ $ npm install -g grunt-cli
 ```
 
 ## Downloading MEAN.JS
-There are several ways you can get the MEAN.JS boilerplate:
-
-### Yo Generator
-The recommended way would be to use the [Official Yo Generator](http://meanjs.org/generator.html), which generates the latest stable copy of the MEAN.JS boilerplate and supplies multiple sub-generators to ease your daily development cycles.
+There are several ways you can get the HANX.JS boilerplate:
 
 ### Cloning The GitHub Repository
-You can also use Git to directly clone the MEAN.JS repository:
+You can also use Git to directly clone the HANX.JS repository:
 ```bash
-$ git clone https://github.com/meanjs/mean.git meanjs
+$ git clone https://youhusam@bitbucket.org/youhusam/hanxjs.git
 ```
-This will clone the latest version of the MEAN.JS repository to a **meanjs** folder.
+This will clone the latest version of the HANX.JS repository to a **hanxjs** folder.
 
 ### Downloading The Repository Zip File
-Another way to use the MEAN.JS boilerplate is to download a zip copy from the [master branch on GitHub](https://github.com/meanjs/mean/archive/master.zip). You can also do this using `wget` command:
+Another way to use the HANX.JS boilerplate is to download a zip copy from the [master branch on BitBucket](https://bitbucket.org/youhusam/hanxjs/get/master.zip). You can also do this using `wget` command:
 ```bash
-$ wget https://github.com/meanjs/mean/archive/master.zip -O meanjs.zip; unzip meanjs.zip; rm meanjs.zip
+$ wget https://bitbucket.org/youhusam/hanxjs/get/master.zip -O hanx.zip; unzip hanx.zip; rm hanx.zip
 ```
-Don't forget to rename **mean-master** after your project name.
+Don't forget to rename **hanx-master** after your project name.
 
 ## Quick Install
-Once you've downloaded the boilerplate and installed all the prerequisites, you're just a few steps away from starting to develop your MEAN application.
+Once you've downloaded the boilerplate and installed all the prerequisites, you're just a few steps away from starting to develop your HANX application.
 
 The first thing you should do is install the Node.js dependencies. The boilerplate comes pre-bundled with a package.json file that contains the list of modules you need to start your application. To learn more about the modules installed visit the NPM & Package.json section.
 
@@ -79,7 +68,7 @@ That's it! Your application should be running. To proceed with your development,
 If you encounter any problems, try the Troubleshooting section.
 
 ## Testing Your Application
-You can run the full test suite included with MEAN.JS with the test task:
+You can run the full test suite included with HANX.JS with the test task:
 
 ```
 $ grunt test
@@ -99,29 +88,6 @@ And to run only the client tests, run the test:client task:
 $ grunt test:client
 ```
 
-## Development and deployment With Docker
-
-* Install [Docker](http://www.docker.com/)
-* Install [Fig](https://github.com/orchardup/fig)
-
-* Local development and testing with fig:
-```bash
-$ fig up
-```
-
-* Local development and testing with just Docker:
-```bash
-$ docker build -t mean .
-$ docker run -p 27017:27017 -d --name db mongo
-$ docker run -p 3000:3000 --link db:db_1 mean
-$
-```
-
-* To enable live reload, forward port 35729 and mount /app and /public as volumes:
-```bash
-$ docker run -p 3000:3000 -p 35729:35729 -v /Users/mdl/workspace/mean-stack/mean/public:/home/mean/public -v /Users/mdl/workspace/mean-stack/mean/app:/home/mean/app --link db:db_1 mean
-```
-
 ## Running in a secure environment
 To run your application in a secure manner you'll need to use OpenSSL and generate a set of self-signed certificates. Unix-based users can use the following command:
 ```bash
@@ -130,22 +96,9 @@ $ sh ./scripts/generate-ssl-certs.sh
 Windows users can follow instructions found [here](http://www.websense.com/support/article/kbarticle/How-to-use-OpenSSL-and-Microsoft-Certification-Authority).
 After you've generated the key and certificate, place them in the *config/sslcerts* folder.
 
-## Getting Started With MEAN.JS
-You have your application running, but there is a lot of stuff to understand. We recommend you go over the [Official Documentation](http://meanjs.org/docs.html).
-In the docs we'll try to explain both general concepts of MEAN components and give you some guidelines to help you improve your development process. We tried covering as many aspects as possible, and will keep it updated by your request. You can also help us develop and improve the documentation by checking out the *gh-pages* branch of this repository.
-
-## Community
-* Use the [Official Website](http://meanjs.org) to learn about changes and the roadmap.
-* Join #meanjs on freenode.
-* Discuss it in the new [Google Group](https://groups.google.com/d/forum/meanjs)
-* Ping us on [Twitter](http://twitter.com/meanjsorg) and [Facebook](http://facebook.com/meanjs)
-
-## Live Example
-Browse the live MEAN.JS example on [http://meanjs.herokuapp.com](http://meanjs.herokuapp.com).
-
 ## Credits
-Inspired by the great work of [Madhusudhan Srinivasa](https://github.com/madhums/)
-The MEAN name was coined by [Valeri Karpov](http://blog.mongodb.org/post/49262866911/the-mean-stack-mongodb-expressjs-angularjs-and)
+Based on the great work of [Amos Haviv](https://github.com/amoshaviv)
+who created the [MEAN.JS](http://meanjs.org) boilerplate.
 
 ## License
 (The MIT License)
