@@ -53,8 +53,8 @@
 		it('$scope.find() should create an array with at least one article object fetched from XHR', inject(function(Articles) {
 			// Create sample article using the Articles service
 			var sampleArticle = new Articles({
-				title: 'An Article about MEAN',
-				content: 'MEAN rocks!'
+				title: 'An Article about HANX',
+				content: 'HANX rocks!'
 			});
 
 			// Create a sample articles array that includes the new article
@@ -74,8 +74,8 @@
 		it('$scope.findOne() should create an array with one article object fetched from XHR using a articleId URL parameter', inject(function(Articles) {
 			// Define a sample article object
 			var sampleArticle = new Articles({
-				title: 'An Article about MEAN',
-				content: 'MEAN rocks!'
+				title: 'An Article about HANX',
+				content: 'HANX rocks!'
 			});
 
 			// Set the URL parameter
@@ -95,20 +95,20 @@
 		it('$scope.create() with valid form data should send a POST request with the form input values and then locate to new object URL', inject(function(Articles) {
 			// Create a sample article object
 			var sampleArticlePostData = new Articles({
-				title: 'An Article about MEAN',
-				content: 'MEAN rocks!'
+				title: 'An Article about HANX',
+				content: 'HANX rocks!'
 			});
 
 			// Create a sample article response
 			var sampleArticleResponse = new Articles({
 				_id: '525cf20451979dea2c000001',
-				title: 'An Article about MEAN',
-				content: 'MEAN rocks!'
+				title: 'An Article about HANX',
+				content: 'HANX rocks!'
 			});
 
 			// Fixture mock form input values
-			scope.title = 'An Article about MEAN';
-			scope.content = 'MEAN rocks!';
+			scope.title = 'An Article about HANX';
+			scope.content = 'HANX rocks!';
 
 			// Set POST response
 			$httpBackend.expectPOST('articles', sampleArticlePostData).respond(sampleArticleResponse);
@@ -129,8 +129,8 @@
 			// Define a sample article put data
 			var sampleArticlePutData = new Articles({
 				_id: '525cf20451979dea2c000001',
-				title: 'An Article about MEAN',
-				content: 'MEAN Rocks!'
+				title: 'An Article about HANX',
+				content: 'HANX Rocks!'
 			});
 
 			// Mock article in scope

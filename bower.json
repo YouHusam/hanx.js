@@ -1,5 +1,5 @@
 {
-	"name": "hamnjs",
+	"name": "hanxjs",
 	"version": "0.3.2",
 	"description": "Fullstack JavaScript with MongoDB, HapiJS, AngularJS, and Node.js.",
 	"dependencies": {

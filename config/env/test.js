@@ -20,7 +20,7 @@ module.exports = {
 		}
 	},
 	app: {
-		title: 'HAMN.JS - Test Environment'
+		title: 'HANX.JS - Test Environment'
 	},
 	facebook: {
 		clientID: process.env.FACEBOOK_ID || 'APP_ID',

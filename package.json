@@ -1,12 +1,12 @@
 {
-  "name": "hamnjs",
+  "name": "hankjs",
   "description": "Full-Stack JavaScript with MongoDB, hapi, AngularJS, and Node.js.",
   "version": "0.0.1",
   "private": false,
   "author": "https://bitbucket.org/youhusam/",
   "repository": {
     "type": "git",
-    "url": "https://bitbucket.org/youhusam/hamn.js"
+    "url": "https://bitbucket.org/youhusam/hanx.js"
   },
   "engines": {
     "node": ">=0.12.2",

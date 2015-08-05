@@ -2,7 +2,7 @@
 
 module.exports = {
 	app: {
-		title: 'HAMN.JS',
+		title: 'HANX.JS',
 		description: 'Full-Stack JavaScript with MongoDB, HAPI, AngularJS, and Node.js',
 		keywords: 'mongodb, HAPI, angularjs, node.js, mongoose, passport'
 	},

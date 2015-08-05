@@ -18,7 +18,7 @@ app/tests/coverage/
 .bower-*/
 .idea/
 
-# MEAN.js app and assets
+# HANX.js app and assets
 # ======================
 config/sslcerts/*.pem
 access.log

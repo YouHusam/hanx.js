@@ -18,7 +18,7 @@ module.exports = {
 		}
 	},
 	app: {
-		title: 'HAMN.JS - Development Environment'
+		title: 'HANX.JS - Development Environment'
 	},
 	facebook: {
 		clientID: process.env.FACEBOOK_ID || 'APP_ID',
