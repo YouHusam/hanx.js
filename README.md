@@ -1,6 +1,8 @@
-![HANX.JS Logo](https://lh5.googleusercontent.com/yxgGIqnzL-0OuzSIKEfFx3rBQWknVJxHoS3df0uRN9lBQDhTsKBAMizgEvabysedTDXvFF-f=w1855-h873)
+![HANX.JS Logo](https://bytebucket.org/youhusam/hanxjs/raw/1eb2adf1abe8db760e5ec48f52c335b49d92792a/public/modules/core/img/brand/logo.png)
 
 HANX.JS is a port of [MEAN.JS](http://meanjs.org) in [Hapi.JS](http://www.hapijs.com/)
+
+Please note that this is still a work in progress.
 
 HAPI.JS is a full-stack JavaScript open-source solution, which provides a solid starting point for [MongoDB](http://www.mongodb.org/), [Node.js](http://www.nodejs.org/), [Hapi](http://hapijs.com/), and [AngularJS](http://angularjs.org/) based applications. The idea is to solve the common issues with connecting those frameworks, build a robust framework to support daily development needs, help developers use better practices while working with popular JavaScript components, and to eliminate the limits of the MEAN stack.
 
