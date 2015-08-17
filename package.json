@@ -40,7 +40,9 @@
     "mongodb": "^2.x.x",
     "mongoose": "^4.1.0",
     "nodemailer": "~1.4.0",
+    "sails-postgresql": "^0.10.16",
     "swig": "~1.4.2",
+    "waterline": "^0.10.26",
     "yar": "~3.0.3"
   },
   "devDependencies": {

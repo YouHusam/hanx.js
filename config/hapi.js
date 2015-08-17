@@ -17,6 +17,11 @@ module.exports = function (db) {
 	var serverOptions = {
 		cache:{
 			engine: require('catbox-mongodb')
+		},
+		connections: {
+			router: {
+				stripTrailingSlash: true
+			}
 		}
 	};
 
@@ -80,15 +85,6 @@ module.exports = function (db) {
 			jsFiles: Config.getJavaScriptAssets(),
 			cssFiles: Config.getCSSAssets()
 		}
-	});
-
-	// Handle extra slashes in the end of URLs
-	server.ext('onRequest', function (request, reply) {
-
-		if (request.path !== '/' && request.path[request.path.length - 1] === '/') {
-			request.path = request.path.slice(0,-1);
-		}
-		reply.continue();
 	});
 
 	// Setting the app router and static folder
