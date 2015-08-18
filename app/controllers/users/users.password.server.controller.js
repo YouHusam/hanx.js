@@ -6,8 +6,6 @@
 var _ 						= require('lodash'),
 		Boom 					= require('boom'),
 		Errorhandler 	= require('../errors.server.controller'),
-		Mongoose 			= require('mongoose'),
-		User 					= Mongoose.model('User'),
 		Config 				= require('../../../config/config'),
 		Nodemailer 		= require('nodemailer'),
 		Async 				= require('async'),
@@ -20,6 +18,8 @@ var smtpTransport = Nodemailer.createTransport(Config.mailer.options);
  * Forgot for reset password (forgot POST)
  */
 exports.forgot = function (request, reply, next) {
+
+	var User = request.collections.user;
 
 	Async.waterfall([
 		// Generate random token
@@ -36,8 +36,10 @@ exports.forgot = function (request, reply, next) {
 			if (request.payload.username) {
 				User.findOne({
 					username: request.payload.username
-				}, '-salt -password', function (err, user) {
+				}, function (err, user) {
 
+					delete user.password;
+					delete user.salt;
 					if (!user) {
 						return reply(Boom.BadRequest('No account with that username has been found'));
 					} else if (user.provider !== 'local') {
@@ -46,7 +48,7 @@ exports.forgot = function (request, reply, next) {
 						user.resetPasswordToken = token;
 						user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 
-						user.save(function (err) {
+						User.update({username: user.username}, user, function (err, updatedUser) {
 							done(err, token, user);
 						});
 					}
@@ -96,6 +98,8 @@ exports.forgot = function (request, reply, next) {
  */
 exports.validateResetToken = function (request, reply) {
 
+	var User = request.collections.user;
+
 	User.findOne({
 		resetPasswordToken: request.params.token,
 		resetPasswordExpires: {
@@ -115,6 +119,8 @@ exports.validateResetToken = function (request, reply) {
  * Reset password POST from email token
  */
 exports.reset = function (request, reply) {
+
+	var User = request.collections.user;
 
 	// Init Variables
 	var passwordDetails = request.payload;
@@ -136,7 +142,7 @@ exports.reset = function (request, reply) {
 						user.resetPasswordToken = undefined;
 						user.resetPasswordExpires = undefined;
 
-						user.save(function (err) {
+						User.update({username: user.username}, user, function (err) {
 
 							if (err) {
 								return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
@@ -197,19 +203,21 @@ exports.reset = function (request, reply) {
  */
 exports.changePassword = function (request, reply) {
 
+	var User = request.collections.user;
+
 	// Init Variables
 	var passwordDetails = request.payload;
 
 	if (request.auth.isAuthenticated) {
 		if (passwordDetails.newPassword) {
-			User.findById(request.auth.credentials.id, function (err, user) {
+			User.findOne({id: request.auth.credentials.id}, function (err, user) {
 
 				if (!err && user) {
 					if (user.authenticate(passwordDetails.currentPassword)) {
 						if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
 							user.password = passwordDetails.newPassword;
 
-							user.save(function (err) {
+							user.update({id: user.id}, user, function (err) {
 
 								if (err) {
 									return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));

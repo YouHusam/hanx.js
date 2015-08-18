@@ -5,20 +5,18 @@
  */
 var _ 						= require('lodash'),
 		Boom 					= require('boom'),
-		Errorhandler 	= require('../errors.server.controller'),
-		Mongoose 			= require('mongoose'),
-		User 					= Mongoose.model('User');
+		Errorhandler 	= require('../errors.server.controller');
 
 /**
  * Signup
  */
 exports.signup = function (request, reply) {
-
+	var User = request.collections.user;
 	// For security measurement we remove the roles from the request.body object
 	delete request.payload.roles;
 
 	// Init Variables
-	var user = new User(request.payload);
+	var user = request.payload;
 	var message = null;
 
 	// Add missing user fields
@@ -26,7 +24,8 @@ exports.signup = function (request, reply) {
 	user.displayName = user.firstName + ' ' + user.lastName;
 
 	// Then save the user
-	user.save(function (err) {
+	User.create(user, function (err) {
+
 		if (err) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 		} else {
@@ -47,8 +46,7 @@ var cleanUser = function (user) {
 
 	// Copy user and remove sensetive and useless data
 	var cleanedUser = {};
-	cleanedUser._id = user._id.toString();
-	cleanedUser.id = user._id;
+	cleanedUser.id = user.id;
 	cleanedUser.displayName = user.displayName;
 	cleanedUser.provider = user.provider;
 	cleanedUser.username = user.username;
@@ -67,6 +65,8 @@ exports.cleanUser = cleanUser;
  * Local Signin
  */
 exports.signin = function (request, reply) {
+
+	var User = request.collections.user;
 
 	if (!request.auth.isAuthenticated) {
 
@@ -128,6 +128,8 @@ exports.oauthCallback = function (request, reply) {
  */
 exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
+	var User = request.collections.user;
+
 	if (request.auth.isAuthenticated) {
 		// Define a search query fields
 		var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
@@ -157,7 +159,7 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
 					User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
 
-						user = new User({
+						user = {
 							firstName: providerUserProfile.firstName,
 							lastName: providerUserProfile.lastName,
 							username: availableUsername,
@@ -165,10 +167,10 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 							email: providerUserProfile.email,
 							provider: providerUserProfile.provider,
 							providerData: providerUserProfile.providerData
-						});
+						};
 
 						// And save the user
-						user.save(function (err) {
+						User.create(user, function (err) {
 
 							return done(err, user);
 						});
@@ -184,8 +186,8 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 		});
 	} else {
 		// User is already logged in, join the provider data to the existing user
-		var user = request.auth.credentials;
-		User.findOne({id: request.auth.credentials.id}, function (err, user) {
+		var AuthUser = request.auth.credentials;
+		User.findOne({id: AuthUser.id}, function (err, user) {
 
 			// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
 			if (user.provider !== providerUserProfile.provider &&
@@ -194,11 +196,8 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 				if (!user.additionalProvidersData) user.additionalProvidersData = {};
 				user.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
 
-				// Then tell mongoose that we've updated the additionalProvidersData field
-				user.markModified('additionalProvidersData');
-
 				// And save the user
-				user.save(function (err) {
+				User.update(AuthUser, user, function (err) {
 
 					return done(err, user, '/#!/settings/accounts');
 				});
@@ -215,6 +214,8 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
  */
 exports.removeOAuthProvider = function (request, reply, next) {
 
+	var User = request.collections.user;
+
 	var user = request.session.get(request.server.app.sessionName);
 	var provider = request.params.provider;
 
@@ -222,12 +223,10 @@ exports.removeOAuthProvider = function (request, reply, next) {
 		// Delete the additional provider
 		if (user.additionalProvidersData[provider]) {
 			delete user.additionalProvidersData[provider];
-
-			// Then tell mongoose that we've updated the additionalProvidersData field
-			user.markModified('additionalProvidersData');
 		}
 
-		user.save(function (err) {
+		User.update(request.auth.credentials, user, function (err) {
+
 			if (err) {
 				return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 			} else {

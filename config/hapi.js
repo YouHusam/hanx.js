@@ -41,6 +41,7 @@ module.exports = function () {
 	});
 
 	var plugins =[
+		{ register: require('bell') },
 		{
 			register: Dogwater,
 			options: {
@@ -60,7 +61,6 @@ module.exports = function () {
 				models: models
 			}
 		},
-		{ register: require('bell') },
 		{
 			register: require('yar'),
 			options: {

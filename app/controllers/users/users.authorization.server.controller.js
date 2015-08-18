@@ -3,18 +3,17 @@
 /**
  * Module dependencies.
  */
-var _ 				= require('lodash'),
-		Boom 			= require('boom'),
-		Mongoose 	= require('mongoose'),
-		User 			= Mongoose.model('User');
+var _ 		= require('lodash'),
+		Boom 	= require('boom');
 
 /**
  * User middleware
  */
 exports.userByID = function (request, reply) {
 
+	var User = request.collections.user;
 	var id = request.param.id;
-	User.findById(id).exec(function (err, user) {
+	User.findOne({id: id}).exec(function (err, user) {
 
 		if (err)
 			return reply(err);
