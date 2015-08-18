@@ -39,6 +39,7 @@
     "lodash": "~3.10.0",
     "mongodb": "^2.x.x",
     "mongoose": "^4.1.0",
+    "node-uuid": "^1.4.3",
     "nodemailer": "~1.4.0",
     "sails-postgresql": "^0.10.16",
     "swig": "~1.4.2",

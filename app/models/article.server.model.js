@@ -3,32 +3,41 @@
 /**
  * Module dependencies.
  */
-var mongoose = require('mongoose'),
-	Schema = mongoose.Schema;
+var Waterline = require('waterline'),
+		Uuid 			= require('node-uuid'),
+		extend 		= Waterline.Collection.extend;
 
 /**
  * Article Schema
  */
-var ArticleSchema = new Schema({
-	created: {
-		type: Date,
-		default: Date.now
-	},
-	title: {
-		type: String,
-		default: '',
-		trim: true,
-		required: 'Title cannot be blank'
-	},
-	content: {
-		type: String,
-		default: '',
-		trim: true
-	},
-	user: {
-		type: Schema.ObjectId,
-		ref: 'User'
+var Article = extend({
+	identity: 'article',
+	attributes: {
+		id: {
+			type: 'text',
+			primaryKey: true,
+			unique: true,
+			required: true,
+			defaultsTo: function () {
+				return Uuid.v4();
+			}
+		},
+		title: {
+			type: 'string',
+			defaultsTo: '',
+			required: true,
+			empty: false
+		},
+		content: {
+			type: 'text',
+			defaultsTo: ''
+		},
+		user: {
+			model: 'user'
+		},
+		autoPK: false,
+		autoCreatedAt: true
 	}
 });
 
-mongoose.model('Article', ArticleSchema);
+module.exports = Article;
