@@ -2,32 +2,17 @@
 /**
  * Module dependencies.
  */
-var Init = require('./config/init')(),
-	Config = require('./config/config'),
-	Mongoose = require('mongoose'),
-	Chalk = require('chalk');
+var Init 			= require('./config/init')(),
+		Config 		= require('./config/config'),
+		Chalk 		= require('chalk');
 
 /**
  * Main application entry file.
  * Please note that the order of loading is important.
  */
 
-// Bootstrap db connection
-var db = Mongoose.connect(Config.db.uri, Config.db.options, function (err) {
-
-	if (err) {
-		console.error(Chalk.red('Could not connect to MongoDB!'));
-		console.log(Chalk.red(err));
-	}
-});
-Mongoose.connection.on('error', function (err) {
-
-	console.error(Chalk.red('MongoDB connection error: ' + err));
-	process.exit(-1);
-});
-
 // Init the express application
-var server = require('./config/hapi')(db);
+var server = require('./config/hapi')();
 
 // Start the server by listening on <port>
 server.start();

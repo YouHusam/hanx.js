@@ -3,15 +3,13 @@
 /**
  * Module dependencies.
  */
-var Waterline = require('waterline'),
-		Uuid 			= require('node-uuid'),
-		extend 		= Waterline.Collection.extend,
-		crypto 		= require('crypto');
+var Uuid		= require('node-uuid'),
+		crypto 	= require('crypto');
 
 /**
  * User Schema
  */
-var User = extend({
+var User = {
 
 	types:{
 
@@ -25,6 +23,10 @@ var User = extend({
 	},
 
 	identity: 'user',
+	connection: 'postgreDev',
+	autoPK: false,
+	autoCreatedAt: true,
+	autoUpdatedAt: true,
 
 	attributes: {
 		id: {
@@ -86,9 +88,11 @@ var User = extend({
 		resetPasswordExpires: {
 			type: 'datetime'
 		},
-		autoPK: false,
-		autoCreatedAt: true,
-		autoUpdatedAt: true,
+		articles: {
+			collection: 'article',
+			via: 'id'
+		},
+
 		/**
 		 * Create instance method for hashing a password
 		 */
@@ -148,6 +152,6 @@ var User = extend({
 		}
 		next();
 	}
-});
+};
 
 module.exports = User;

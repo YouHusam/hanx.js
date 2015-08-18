@@ -3,15 +3,16 @@
 /**
  * Module dependencies.
  */
-var Waterline = require('waterline'),
-		Uuid 			= require('node-uuid'),
-		extend 		= Waterline.Collection.extend;
+var Uuid = require('node-uuid');
 
 /**
  * Article Schema
  */
-var Article = extend({
+var Article = {
 	identity: 'article',
+	connection: 'postgreDev',
+	autoPK: false,
+	autoCreatedAt: true,
 	attributes: {
 		id: {
 			type: 'text',
@@ -34,10 +35,8 @@ var Article = extend({
 		},
 		user: {
 			model: 'user'
-		},
-		autoPK: false,
-		autoCreatedAt: true
+		}
 	}
-});
+};
 
 module.exports = Article;

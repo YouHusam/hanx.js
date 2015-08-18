@@ -3,16 +3,18 @@
 /**
  * Module dependencies.
  */
-var Fs 			= require('fs'),
-		Http 		= require('http'),
-		Https 	= require('https'),
-		Hapi 		= require('hapi'),
-		Logger 	= require('./logger'),
-		Config 	= require('./config'),
-		Boom 		= require('boom'),
-		Path 		= require('path');
+var Fs 				= require('fs'),
+		Http 			= require('http'),
+		Https 		= require('https'),
+		Hapi 			= require('hapi'),
+		Logger 		= require('./logger'),
+		Config 		= require('./config'),
+		Boom 			= require('boom'),
+		Dogwater 	= require('dogwater'),
+		pg 				= require('sails-postgresql'),
+		Path 			= require('path');
 
-module.exports = function (db) {
+module.exports = function () {
 
 	var serverOptions = {
 		cache:{
@@ -33,11 +35,31 @@ module.exports = function (db) {
 	server.app.sessionName = Config.sessionName;
 
 	// Globbing model files
+	var models = [];
 	Config.getGlobbedFiles('./app/models/**/*.js').forEach(function (modelPath) {
-		require(Path.resolve(modelPath));
+		models.push(require(Path.resolve(modelPath)));
 	});
 
 	var plugins =[
+		{
+			register: Dogwater,
+			options: {
+				adapters: {
+					'default': pg,
+					postgre: pg
+				},
+				connections: {
+					postgreDev: {
+					  adapter: 'postgre',
+					  host: 'localhost',
+					  database: 'development',
+					  user: '',
+					  password: ''
+					}
+				},
+				models: models
+			}
+		},
 		{ register: require('bell') },
 		{
 			register: require('yar'),
@@ -55,7 +77,7 @@ module.exports = function (db) {
 	];
 
 	if (Config.log.enabled) {
-		plugins.push(		{
+		plugins.push({
 			register: require('good'),
 			options: {
 				reporters: Logger.getLogReporters()

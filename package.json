@@ -25,6 +25,7 @@
     "bower": "~1.4.1",
     "catbox-mongodb": "^1.1.0",
     "chalk": "~1.1.0",
+    "dogwater": "^1.0.0",
     "forever": "~0.15.1",
     "glob": "~5.0.14",
     "good": "~6.3.0",
