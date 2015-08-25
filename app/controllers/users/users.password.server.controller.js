@@ -217,7 +217,7 @@ exports.changePassword = function (request, reply) {
 						if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
 							user.password = passwordDetails.newPassword;
 
-							user.update({id: user.id}, user, function (err) {
+							User.update({id: user.id}, {password: user.password}).exec(function (err, user) {
 
 								if (err) {
 									return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
@@ -228,7 +228,7 @@ exports.changePassword = function (request, reply) {
 									request.session.clear(request.server.app.sessionName);
 
 									// Copy user and remove sensetive and useless data
-									var authedUser = cleanUser(user);
+									var authedUser = cleanUser(user[0]);
 									if(authedUser !== {}){
 										// Create a new session to login the user
 										request.session.set(request.server.app.sessionName, authedUser);

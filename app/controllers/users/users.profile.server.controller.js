@@ -20,15 +20,15 @@ exports.update = function (request, reply) {
 
 	// For security measurement we remove the roles from the request.paylad object
 	delete request.payload.roles;
-	delete reqUser.id;
+	delete request.payload.id;
 
-	User.update(reqUser, request.payload, function(err, user) {
+	User.update(reqUser, request.payload).exec(function (err, user) {
 		if (err) {
 			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 
 		} else {
 			var authedUser = require('./users.authentication.server.controller.js')
-					.cleanUser(user);
+					.cleanUser(user[0]);
 
 			request.session.set(request.server.app.sessionName, authedUser);
 			return reply(authedUser);

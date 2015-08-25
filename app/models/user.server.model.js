@@ -144,10 +144,29 @@ var User = {
 	 */
 	beforeCreate: function (values, next) {
 
-		if (values.password && values.password.length > 6){
+		if (values.password && values.password.length > 6) {
 			values.salt = crypto.randomBytes(16).toString('base64');
 			values.password = this.hashPassword(values.password, values.salt);
 		}
+		next();
+	},
+
+	/**
+	 * Hook a pre update method in order to change the given name and password
+	 */
+	beforeUpdate: function (values, next) {
+
+		// Update given name if new first or last name is provided
+		if (values.firstName || values.lastName) {
+			values.displayName = values.firstName + ' ' + values.lastName;
+		}
+
+		// Update password if new password is provided
+		if (values.password && values.password.length > 6) {
+			values.salt = crypto.randomBytes(16).toString('base64');
+			values.password = this.hashPassword(values.password, values.salt);
+		}
+
 		next();
 	}
 };
