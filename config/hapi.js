@@ -54,8 +54,8 @@ module.exports = function () {
 					  adapter: 'postgre',
 					  host: 'localhost',
 					  database: 'development',
-					  user: '',
-					  password: ''
+					  user: 'husam',
+					  password: 'password'
 					}
 				},
 				models: models

@@ -11,16 +11,6 @@ var Uuid		= require('node-uuid'),
  */
 var User = {
 
-	types:{
-
-		/**
-		 * A Validation function for local strategy password
-		 */
-		password: function (password) {
-
-			return (this.provider !== 'local' || (password && password.length > 6));
-		}
-	},
 
 	identity: 'user',
 	connection: 'postgreDev',
@@ -28,6 +18,17 @@ var User = {
 	autoCreatedAt: true,
 	autoUpdatedAt: true,
 
+	types:{
+
+		/**
+		 * A Validation function for local strategy password
+		 */
+		password: function (password) {
+
+			return (this.provider !== 'local' ||
+				(password && password.length > 6));
+		}
+	},
 	attributes: {
 		id: {
 			type: 'text',
@@ -40,22 +41,18 @@ var User = {
 		},
 		firstName: {
 			type: 'string',
-			defaultsTo: '',
-			empty: false
+			required: true
 		},
 		lastName: {
 			type: 'string',
-			defaultsTo: '',
-			empty: false
+			required: true
 		},
 		displayName: {
 			type: 'string',
 		},
 		email: {
-			type: 'string',
-			defaultsTo: '',
-			empty: false,
-			email: true
+			type: 'email',
+			required: true,
 		},
 		username: {
 			type: 'string',
@@ -64,6 +61,7 @@ var User = {
 		},
 		password: {
 			type: 'string',
+			required: true,
 			defaultsTo: '',
 			password: true
 		},
@@ -92,7 +90,14 @@ var User = {
 			collection: 'article',
 			via: 'id'
 		},
+		/**
+		 * Create instance method for authenticating user
+		 */
+		authenticate: function (password) {
 
+			return this.password === User.hashPassword(password, this.salt);
+		},
+	},
 		/**
 		 * Create instance method for hashing a password
 		 */
@@ -108,14 +113,7 @@ var User = {
 			}
 		},
 
-		/**
-		 * Create instance method for authenticating user
-		 */
-		authenticate: function (password) {
 
-			return this.password === this.hashPassword(password);
-		},
-	},
 
 	/**
 	 * Find possible not used username
