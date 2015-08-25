@@ -3,14 +3,14 @@
 /**
  * Module dependencies.
  */
-var _ 						= require('lodash'),
-		Boom 					= require('boom'),
-		Errorhandler 	= require('../errors.server.controller'),
-		Config 				= require('../../../config/config'),
-		Nodemailer 		= require('nodemailer'),
-		Async 				= require('async'),
-		cleanUser			= require('./users.authentication.server.controller.js').cleanUser,
-		Crypto 				= require('crypto');
+var _              = require('lodash'),
+    Boom           = require('boom'),
+    Errorhandler   = require('../errors.server.controller'),
+    Config         = require('../../../config/config'),
+    Nodemailer     = require('nodemailer'),
+    Async          = require('async'),
+    cleanUser      = require('./users.authentication.server.controller.js').cleanUser,
+    Crypto         = require('crypto');
 
 var smtpTransport = Nodemailer.createTransport(Config.mailer.options);
 
@@ -19,78 +19,78 @@ var smtpTransport = Nodemailer.createTransport(Config.mailer.options);
  */
 exports.forgot = function (request, reply, next) {
 
-	var User = request.collections.user;
+  var User = request.collections.user;
 
-	Async.waterfall([
-		// Generate random token
-		function (done) {
+  Async.waterfall([
+    // Generate random token
+    function (done) {
 
-			Crypto.randomBytes(20, function (err, buffer) {
-				var token = buffer.toString('hex');
-				done(err, token);
-			});
-		},
-		// Lookup user by username
-		function (token, done) {
+      Crypto.randomBytes(20, function (err, buffer) {
+        var token = buffer.toString('hex');
+        done(err, token);
+      });
+    },
+    // Lookup user by username
+    function (token, done) {
 
-			if (request.payload.username) {
-				User.findOne({
-					username: request.payload.username
-				}, function (err, user) {
+      if (request.payload.username) {
+        User.findOne({
+          username: request.payload.username
+        }, function (err, user) {
 
-					delete user.password;
-					delete user.salt;
-					if (!user) {
-						return reply(Boom.BadRequest('No account with that username has been found'));
-					} else if (user.provider !== 'local') {
-						return reply(Boom.BadRequest('It seems like you signed up using your ' + user.provider + ' account'));
-					} else {
-						user.resetPasswordToken = token;
-						user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+          delete user.password;
+          delete user.salt;
+          if (!user) {
+            return reply(Boom.BadRequest('No account with that username has been found'));
+          } else if (user.provider !== 'local') {
+            return reply(Boom.BadRequest('It seems like you signed up using your ' + user.provider + ' account'));
+          } else {
+            user.resetPasswordToken = token;
+            user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 
-						User.update({username: user.username}, user, function (err, updatedUser) {
-							done(err, token, user);
-						});
-					}
-				});
-			} else {
-				return reply(Boom.BadRequest('Username field must not be blank'));
-			}
-		},
-		function (token, user, done) {
+            User.update({username: user.username}, user, function (err, updatedUser) {
+              done(err, token, user);
+            });
+          }
+        });
+      } else {
+        return reply(Boom.BadRequest('Username field must not be blank'));
+      }
+    },
+    function (token, user, done) {
 
-			request.server.render('templates/reset-password-email', {
-				name: user.displayName,
-				appName: Config.app.title,
-				url: 'http://' + request.headers.host + '/auth/reset/' + token
-			}, function (err, emailHTML) {
-				done(err, emailHTML, user);
-			});
-		},
-		// If valid email, send reset email using service
-		function (emailHTML, user, done) {
+      request.server.render('templates/reset-password-email', {
+        name: user.displayName,
+        appName: Config.app.title,
+        url: 'http://' + request.headers.host + '/auth/reset/' + token
+      }, function (err, emailHTML) {
+        done(err, emailHTML, user);
+      });
+    },
+    // If valid email, send reset email using service
+    function (emailHTML, user, done) {
 
-			var mailOptions = {
-				to: user.email,
-				from: Config.mailer.from,
-				subject: 'Password Reset',
-				html: emailHTML
-			};
-			smtpTransport.sendMail(mailOptions, function (err) {
+      var mailOptions = {
+        to: user.email,
+        from: Config.mailer.from,
+        subject: 'Password Reset',
+        html: emailHTML
+      };
+      smtpTransport.sendMail(mailOptions, function (err) {
 
-				if (!err) {
-					reply({message: 'An email has been sent to ' + user.email + ' with further instructions.'});
-				} else {
-					return reply(Boom.badRequest('Failure sending email'));
-				}
+        if (!err) {
+          reply({message: 'An email has been sent to ' + user.email + ' with further instructions.'});
+        } else {
+          return reply(Boom.badRequest('Failure sending email'));
+        }
 
-				done(err);
-			});
-		}
-	], function (err) {
+        done(err);
+      });
+    }
+  ], function (err) {
 
-		if (err) return reply.continue(err);
-	});
+    if (err) return reply.continue(err);
+  });
 };
 
 /**
@@ -98,21 +98,21 @@ exports.forgot = function (request, reply, next) {
  */
 exports.validateResetToken = function (request, reply) {
 
-	var User = request.collections.user;
+  var User = request.collections.user;
 
-	User.findOne({
-		resetPasswordToken: request.params.token,
-		resetPasswordExpires: {
-			$gt: Date.now()
-		}
-	}, function (err, user) {
+  User.findOne({
+    resetPasswordToken: request.params.token,
+    resetPasswordExpires: {
+      $gt: Date.now()
+    }
+  }, function (err, user) {
 
-		if (!user) {
-			return reply.redirect('/#!/password/reset/invalid');
-		}
+    if (!user) {
+      return reply.redirect('/#!/password/reset/invalid');
+    }
 
-		reply.redirect('/#!/password/reset/' + request.params.token);
-	});
+    reply.redirect('/#!/password/reset/' + request.params.token);
+  });
 };
 
 /**
@@ -120,82 +120,82 @@ exports.validateResetToken = function (request, reply) {
  */
 exports.reset = function (request, reply) {
 
-	var User = request.collections.user;
+  var User = request.collections.user;
 
-	// Init Variables
-	var passwordDetails = request.payload;
+  // Init Variables
+  var passwordDetails = request.payload;
 
-	Async.waterfall([
+  Async.waterfall([
 
-		function (done) {
+    function (done) {
 
-			User.findOne({
-				resetPasswordToken: request.params.token,
-				resetPasswordExpires: {
-					$gt: Date.now()
-				}
-			}, function (err, user) {
+      User.findOne({
+        resetPasswordToken: request.params.token,
+        resetPasswordExpires: {
+          $gt: Date.now()
+        }
+      }, function (err, user) {
 
-				if (!err && user) {
-					if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
-						user.password = passwordDetails.newPassword;
-						user.resetPasswordToken = undefined;
-						user.resetPasswordExpires = undefined;
+        if (!err && user) {
+          if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
+            user.password = passwordDetails.newPassword;
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
 
-						User.update({username: user.username}, user, function (err) {
+            User.update({username: user.username}, user, function (err) {
 
-							if (err) {
-								return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-							} else {
-								// Clear session
-								request.session.clear(request.server.app.sessionName);
+              if (err) {
+                return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+              } else {
+                // Clear session
+                request.session.clear(request.server.app.sessionName);
 
-								// Copy user and remove sensetive and useless data
-								var authedUser = cleanUser(user);
-								if(authedUser !== {}){
-									// Create a new session to login the user
-									request.session.set(request.server.app.sessionName, authedUser);
-									reply(authedUser);
-								}
-							}
-						});
-					} else {
-						return reply(Boom.badRequest('Passwords do not match'));
-					}
-				} else {
-					return reply(Boom.badRequest('Password reset token is invalid or has expired.'));
-				}
-			});
-		},
-		function (user, done) {
+                // Copy user and remove sensetive and useless data
+                var authedUser = cleanUser(user);
+                if(authedUser !== {}){
+                  // Create a new session to login the user
+                  request.session.set(request.server.app.sessionName, authedUser);
+                  reply(authedUser);
+                }
+              }
+            });
+          } else {
+            return reply(Boom.badRequest('Passwords do not match'));
+          }
+        } else {
+          return reply(Boom.badRequest('Password reset token is invalid or has expired.'));
+        }
+      });
+    },
+    function (user, done) {
 
-			request.server.render('templates/reset-password-confirm-email', {
-				name: user.displayName,
-				appName: Config.app.title
-			}, function (err, emailHTML) {
+      request.server.render('templates/reset-password-confirm-email', {
+        name: user.displayName,
+        appName: Config.app.title
+      }, function (err, emailHTML) {
 
-				done(err, emailHTML, user);
-			});
-		},
-		// If valid email, send reset email using service
-		function (emailHTML, user, done) {
+        done(err, emailHTML, user);
+      });
+    },
+    // If valid email, send reset email using service
+    function (emailHTML, user, done) {
 
-			var mailOptions = {
-				to: user.email,
-				from: Config.mailer.from,
-				subject: 'Your password has been changed',
-				html: emailHTML
-			};
+      var mailOptions = {
+        to: user.email,
+        from: Config.mailer.from,
+        subject: 'Your password has been changed',
+        html: emailHTML
+      };
 
-			smtpTransport.sendMail(mailOptions, function (err) {
+      smtpTransport.sendMail(mailOptions, function (err) {
 
-				done(err, 'done');
-			});
-		}
-	], function (err) {
+        done(err, 'done');
+      });
+    }
+  ], function (err) {
 
-		if (err) return reply.continue(err);
-	});
+    if (err) return reply.continue(err);
+  });
 };
 
 /**
@@ -203,59 +203,59 @@ exports.reset = function (request, reply) {
  */
 exports.changePassword = function (request, reply) {
 
-	var User = request.collections.user;
+  var User = request.collections.user;
 
-	// Init Variables
-	var passwordDetails = request.payload;
+  // Init Variables
+  var passwordDetails = request.payload;
 
-	if (request.auth.isAuthenticated) {
-		if (passwordDetails.newPassword) {
-			User.findOne({id: request.auth.credentials.id}, function (err, user) {
+  if (request.auth.isAuthenticated) {
+    if (passwordDetails.newPassword) {
+      User.findOne({id: request.auth.credentials.id}, function (err, user) {
 
-				if (!err && user) {
-					if (user.authenticate(passwordDetails.currentPassword)) {
-						if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
-							user.password = passwordDetails.newPassword;
+        if (!err && user) {
+          if (user.authenticate(passwordDetails.currentPassword)) {
+            if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
+              user.password = passwordDetails.newPassword;
 
-							User.update({id: user.id}, {password: user.password}).exec(function (err, user) {
+              User.update({id: user.id}, {password: user.password}).exec(function (err, user) {
 
-								if (err) {
-									return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+                if (err) {
+                  return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 
-								} else {
+                } else {
 
-									// Clear session
-									request.session.clear(request.server.app.sessionName);
+                  // Clear session
+                  request.session.clear(request.server.app.sessionName);
 
-									// Copy user and remove sensetive and useless data
-									var authedUser = cleanUser(user[0]);
-									if(authedUser !== {}){
-										// Create a new session to login the user
-										request.session.set(request.server.app.sessionName, authedUser);
-										reply({
-											message: 'Password changed successfully'
-										});
-									}
-								}
-							});
-						} else {
-							reply(Boom.badRequest('Passwords do not match'));
+                  // Copy user and remove sensetive and useless data
+                  var authedUser = cleanUser(user[0]);
+                  if(authedUser !== {}){
+                    // Create a new session to login the user
+                    request.session.set(request.server.app.sessionName, authedUser);
+                    reply({
+                      message: 'Password changed successfully'
+                    });
+                  }
+                }
+              });
+            } else {
+              reply(Boom.badRequest('Passwords do not match'));
 
-						}
-					} else {
-						reply(Boom.badRequest('Current password is incorrect'));
+            }
+          } else {
+            reply(Boom.badRequest('Current password is incorrect'));
 
-					}
-				} else {
-					reply(Boom.badRequest('User is not found'));
+          }
+        } else {
+          reply(Boom.badRequest('User is not found'));
 
-				}
-			});
-		} else {
-			reply(Boom.badRequest('Please provide a new password'));
+        }
+      });
+    } else {
+      reply(Boom.badRequest('Please provide a new password'));
 
-		}
-	} else {
-		reply(Boom.badRequest('User is not signed in'));
-	}
+    }
+  } else {
+    reply(Boom.badRequest('User is not signed in'));
+  }
 };

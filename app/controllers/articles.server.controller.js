@@ -3,27 +3,27 @@
 /**
  * Module dependencies.
  */
-var Errorhandler 	= require('./errors.server.controller'),
-		Boom 					= require('boom'),
-		_ 						= require('lodash');
+var Errorhandler   = require('./errors.server.controller'),
+    Boom           = require('boom'),
+    _              = require('lodash');
 
 /**
  * Create a article
  */
 exports.create = function (request, reply) {
 
-	var Article = request.collections.article;
-	var article = request.payload;
-	article.user = request.auth.credentials.id;
+  var Article = request.collections.article;
+  var article = request.payload;
+  article.user = request.auth.credentials.id;
 
-	Article.create(article, function (err, article) {
+  Article.create(article, function (err, article) {
 
-		if (err) {
-			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-		} else {
-			reply(article);
-		}
-	});
+    if (err) {
+      return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+    } else {
+      reply(article);
+    }
+  });
 };
 
 /**
@@ -31,7 +31,7 @@ exports.create = function (request, reply) {
  */
 exports.read = function (request, reply) {
 
-	reply(request.pre.article);
+  reply(request.pre.article);
 };
 
 /**
@@ -39,16 +39,16 @@ exports.read = function (request, reply) {
  */
 exports.update = function (request, reply) {
 
-	var Article = request.collections.article;
-	Article.update(request.pre.article, request.payload,
-		function (err, article) {
+  var Article = request.collections.article;
+  Article.update(request.pre.article, request.payload,
+    function (err, article) {
 
-			if (err) {
-				return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-			} else {
-				reply(article);
-			}
-	});
+      if (err) {
+        return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+      } else {
+        reply(article);
+      }
+  });
 };
 
 /**
@@ -56,16 +56,16 @@ exports.update = function (request, reply) {
  */
 exports.delete = function (request, reply) {
 
-	var Article = request.collections.article;
-	var article = request.pre.article;
-	Article.destroy(article, function (err) {
+  var Article = request.collections.article;
+  var article = request.pre.article;
+  Article.destroy(article, function (err) {
 
-		if (err) {
-			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-		} else {
-			reply();
-		}
-	});
+    if (err) {
+      return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+    } else {
+      reply();
+    }
+  });
 };
 
 /**
@@ -73,17 +73,17 @@ exports.delete = function (request, reply) {
  */
 exports.list = function (request, reply) {
 
-	var Article = request.collections.article;
+  var Article = request.collections.article;
 
-	Article.find({}).sort({createdAt: 'desc'}).populate('user')
-		.exec(function (err, articles) {
+  Article.find({}).sort({createdAt: 'desc'}).populate('user')
+    .exec(function (err, articles) {
 
-			if (err) {
-				return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-			} else {
-				reply(articles);
-			}
-	});
+      if (err) {
+        return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+      } else {
+        reply(articles);
+      }
+  });
 };
 
 /**
@@ -91,17 +91,17 @@ exports.list = function (request, reply) {
  */
 exports.articleByID = function (request, reply) {
 
-	var Article = request.collections.article;
-	var id = request.params.articleId;
+  var Article = request.collections.article;
+  var id = request.params.articleId;
 
-	Article.findOne({id: id}).populate('user').exec(function (err, article) {
+  Article.findOne({id: id}).populate('user').exec(function (err, article) {
 
-		if (err) return reply(err);
-		if (!article) {
-			return reply(Boom.notfound('Article not found'));
-		}
-		reply(article);
-	});
+    if (err) return reply(err);
+    if (!article) {
+      return reply(Boom.notfound('Article not found'));
+    }
+    reply(article);
+  });
 };
 
 /**
@@ -109,9 +109,9 @@ exports.articleByID = function (request, reply) {
  */
 exports.hasAuthorization = function (request, reply) {
 
-	if (request.pre.article.user.id.toString() !==
-			request.auth.credentials._id.toString()) {
-		return reply(Boom.forbidden('User is not authorized'));
-	}
-	reply();
+  if (request.pre.article.user.id.toString() !==
+      request.auth.credentials._id.toString()) {
+    return reply(Boom.forbidden('User is not authorized'));
+  }
+  reply();
 };

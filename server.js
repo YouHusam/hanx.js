@@ -2,9 +2,9 @@
 /**
  * Module dependencies.
  */
-var Init 			= require('./config/init')(),
-		Config 		= require('./config/config'),
-		Chalk 		= require('chalk');
+var Init    = require('./config/init')(),
+    Config  = require('./config/config'),
+    Chalk   = require('chalk');
 
 /**
  * Main application entry file.
@@ -27,6 +27,6 @@ console.log(Chalk.green('Environment:\t\t\t' + process.env.NODE_ENV));
 console.log(Chalk.green('Port:\t\t\t\t' + Config.port));
 console.log(Chalk.green('Database:\t\t\t' + Config.db.uri));
 if (process.env.NODE_ENV === 'secure') {
-	console.log(Chalk.green('HTTPs:\t\t\t\ton'));
+  console.log(Chalk.green('HTTPs:\t\t\t\ton'));
 }
 console.log('--');

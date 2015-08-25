@@ -11,28 +11,28 @@ var Config = require('./config');
  */
 module.exports = {
 
-	getLogReporters: function () {
+  getLogReporters: function () {
 
-		var reporters = [
+    var reporters = [
 
-		];
+    ];
 
-		if ('console' in Config.log.options) {
-			reporters.push({
-					reporter: require('good-console'),
-					events: { response: Config.log.options.events }
-			});
-		}
+    if ('console' in Config.log.options) {
+      reporters.push({
+          reporter: require('good-console'),
+          events: { response: Config.log.options.events }
+      });
+    }
 
-		if ('stream' in Config.log.options) {
-			reporters.push({
-				reporter: require('good-file'),
-				events: { response: '*' },
-				config: process.cwd() + '/' + Config.log.options.stream
-			});
-		}
+    if ('stream' in Config.log.options) {
+      reporters.push({
+        reporter: require('good-file'),
+        events: { response: '*' },
+        config: process.cwd() + '/' + Config.log.options.stream
+      });
+    }
 
-		return reporters;
-	}
+    return reporters;
+  }
 
 };
