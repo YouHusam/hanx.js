@@ -133,13 +133,16 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
   if (request.auth.isAuthenticated) {
     // Define a search query fields
-    var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
+    var searchMainProviderIdentifierField = providerUserProfile.providerIdentifierField;
     var searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;
 
     // Define main provider search query
     var mainProviderSearchQuery = {};
     mainProviderSearchQuery.provider = providerUserProfile.provider;
-    mainProviderSearchQuery[searchMainProviderIdentifierField] = providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
+
+    mainProviderSearchQuery['providerData'] = {contains: {}};
+    mainProviderSearchQuery.providerData.contains[searchMainProviderIdentifierField] =
+      providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
 
     // Define additional provider search query
     var additionalProviderSearchQuery = {};
@@ -147,20 +150,33 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
     // Define a search query to find existing user with current provider profile
     var searchQuery = {
-      $or: [mainProviderSearchQuery, additionalProviderSearchQuery]
+      'or': [mainProviderSearchQuery, additionalProviderSearchQuery]
     };
 
-    User.findOne(searchQuery, function (err, user) {
+
+    var query = 'SELECT * FROM "user" WHERE ('+
+      '"provider" = \'' + providerUserProfile.provider + '\' AND '+
+      '"providerData"->>\'' + providerUserProfile.providerIdentifierField + '\' = \'' +
+
+      providerUserProfile.providerData[providerUserProfile.providerIdentifierField] +
+
+      '\') OR ("additionalProvidersData"#>>\'{' + providerUserProfile.provider + ',' +
+
+      providerUserProfile.providerIdentifierField + '}\' = \''+
+      providerUserProfile.providerData[providerUserProfile.providerIdentifierField]+
+      '\') LIMIT 1;';
+
+    User.query(query, function (err, results) {
 
       if (err) {
         return done(err);
       } else {
-        if (!user) {
+        if (!results.rows[0]) {
           var possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
 
           User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
 
-            user = {
+            var user = {
               firstName: providerUserProfile.firstName,
               lastName: providerUserProfile.lastName,
               username: availableUsername,
@@ -179,7 +195,7 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
         } else {
 
           // Remove unwanted data from user
-          var authedUser = cleanUser(user);
+          var authedUser = cleanUser(results.rows[0]);
 
           return done(err, authedUser);
         }

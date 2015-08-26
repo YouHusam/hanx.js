@@ -61,7 +61,7 @@ var User = {
     password: {
       type: 'string',
       required: true,
-      defaultsTo: '',
+      defaultsTo: '123456', // TODO: FIX THIS
       password: true
     },
     salt: {
