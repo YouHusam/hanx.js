@@ -60,8 +60,8 @@ var User = {
     },
     password: {
       type: 'string',
-      required: true,
-      defaultsTo: '123456', // TODO: FIX THIS
+      notNull: true,
+      defaultsTo: '', // There should be a better way to do this
       password: true
     },
     salt: {
@@ -94,6 +94,7 @@ var User = {
      */
     authenticate: function (password) {
 
+      if (!password) return false;
       return this.password === User.hashPassword(password, this.salt);
     },
   },
@@ -141,6 +142,11 @@ var User = {
    * Hook a pre save method to hash the password
    */
   beforeCreate: function (values, next) {
+
+    // Validate password
+    if (values.provider === 'local') {
+      if (values.password === '') values.password = undefined;
+    }
 
     if (values.password && values.password.length > 6) {
       values.salt = crypto.randomBytes(16).toString('base64');

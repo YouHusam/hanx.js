@@ -18,7 +18,6 @@ exports.signup = function (request, reply) {
 
   // Init Variables
   var user = request.payload;
-  var message = null;
 
   // Add missing user fields
   user.provider = 'local';
@@ -56,6 +55,7 @@ var cleanUser = function (user) {
   cleanedUser.email = user.email;
   cleanedUser.lastName = user.lastName;
   cleanedUser.firstName = user.firstName;
+  cleanedUser.additionalProvidersData = user.additionalProvidersData;
 
   return cleanedUser;
 };
@@ -131,37 +131,15 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
   var User = request.collections.user;
 
-  if (request.auth.isAuthenticated) {
-    // Define a search query fields
-    var searchMainProviderIdentifierField = providerUserProfile.providerIdentifierField;
-    var searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;
-
-    // Define main provider search query
-    var mainProviderSearchQuery = {};
-    mainProviderSearchQuery.provider = providerUserProfile.provider;
-
-    mainProviderSearchQuery['providerData'] = {contains: {}};
-    mainProviderSearchQuery.providerData.contains[searchMainProviderIdentifierField] =
-      providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
-
-    // Define additional provider search query
-    var additionalProviderSearchQuery = {};
-    additionalProviderSearchQuery[searchAdditionalProviderIdentifierField] = providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
+  if (!request.session.get(request.server.app.sessionName) &&
+      request.auth.isAuthenticated) {
 
     // Define a search query to find existing user with current provider profile
-    var searchQuery = {
-      'or': [mainProviderSearchQuery, additionalProviderSearchQuery]
-    };
-
-
     var query = 'SELECT * FROM "user" WHERE ('+
       '"provider" = \'' + providerUserProfile.provider + '\' AND '+
       '"providerData"->>\'' + providerUserProfile.providerIdentifierField + '\' = \'' +
-
       providerUserProfile.providerData[providerUserProfile.providerIdentifierField] +
-
       '\') OR ("additionalProvidersData"#>>\'{' + providerUserProfile.provider + ',' +
-
       providerUserProfile.providerIdentifierField + '}\' = \''+
       providerUserProfile.providerData[providerUserProfile.providerIdentifierField]+
       '\') LIMIT 1;';
@@ -203,7 +181,7 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
     });
   } else {
     // User is already logged in, join the provider data to the existing user
-    var AuthUser = request.auth.credentials;
+    var AuthUser = request.session.get(request.server.app.sessionName);
     User.findOne({id: AuthUser.id}, function (err, user) {
 
       // Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
@@ -248,6 +226,7 @@ exports.removeOAuthProvider = function (request, reply, next) {
         return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
       } else {
         request.login(user, function (err) {
+
           if (err) {
             reply(Boom.badRequest(err));
           } else {

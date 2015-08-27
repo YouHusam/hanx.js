@@ -16,13 +16,12 @@ exports.update = function (request, reply) {
 
   // Init Variables
   var reqUser = request.auth.credentials;
-  var message = null;
 
   // For security measurement we remove the roles from the request.paylad object
   delete request.payload.roles;
   delete request.payload.id;
 
-  User.update(reqUser, request.payload).exec(function (err, user) {
+  User.update(reqUser.id, request.payload).exec(function (err, user) {
     if (err) {
       return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 
