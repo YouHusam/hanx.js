@@ -38,15 +38,17 @@ exports.forgot = function (request, reply, next) {
           username: request.payload.username
         }, function (err, user) {
 
-          delete user.password;
-          delete user.salt;
           if (!user) {
-            return reply(Boom.BadRequest('No account with that username has been found'));
+            return reply(Boom.badRequest('No account with that username has been found'));
           } else if (user.provider !== 'local') {
-            return reply(Boom.BadRequest('It seems like you signed up using your ' + user.provider + ' account'));
+            return reply(Boom.badRequest('It seems like you signed up using your ' + user.provider + ' account'));
           } else {
+            delete user.password;
+            delete user.salt;
             user.resetPasswordToken = token;
-            user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+            var passwordExpiresAt = new Date(Date.now() + 3600000); // 1 hour
+            user.resetPasswordExpires = passwordExpiresAt.toISOString();
 
             User.update({username: user.username}, user, function (err, updatedUser) {
               done(err, token, user);
@@ -54,7 +56,7 @@ exports.forgot = function (request, reply, next) {
           }
         });
       } else {
-        return reply(Boom.BadRequest('Username field must not be blank'));
+        return reply(Boom.badRequest('Username field must not be blank'));
       }
     },
     function (token, user, done) {
@@ -99,11 +101,12 @@ exports.forgot = function (request, reply, next) {
 exports.validateResetToken = function (request, reply) {
 
   var User = request.collections.user;
+  var dateNow = new Date();
 
   User.findOne({
     resetPasswordToken: request.params.token,
     resetPasswordExpires: {
-      $gt: Date.now()
+      '>': dateNow.toISOString()
     }
   }, function (err, user) {
 
@@ -129,20 +132,23 @@ exports.reset = function (request, reply) {
 
     function (done) {
 
+      var dateNow = new Date();
       User.findOne({
         resetPasswordToken: request.params.token,
         resetPasswordExpires: {
-          $gt: Date.now()
+          '>': dateNow.toISOString()
         }
       }, function (err, user) {
 
         if (!err && user) {
           if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
-            user.password = passwordDetails.newPassword;
-            user.resetPasswordToken = undefined;
-            user.resetPasswordExpires = undefined;
+            var newUser = {
+              password: passwordDetails.newPassword,
+              resetPasswordToken: undefined,
+              resetPasswordExpires: undefined
+            };
 
-            User.update({username: user.username}, user, function (err) {
+            User.update({username: user.username}, newUser, function (err) {
 
               if (err) {
                 return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
