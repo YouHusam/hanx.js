@@ -17,7 +17,7 @@ var User = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
-  types:{
+  types: {
 
     /**
      * A Validation function for local strategy password
@@ -25,9 +25,10 @@ var User = {
     password: function (password) {
 
       return (this.provider !== 'local' ||
-        (password && password.length > 6));
+      (password && password.length > 6));
     }
   },
+
   attributes: {
     id: {
       type: 'text',
@@ -47,25 +48,12 @@ var User = {
       required: true
     },
     displayName: {
-      type: 'string',
-    },
-    email: {
-      type: 'email',
-      required: true,
+      type: 'string'
     },
     username: {
       type: 'string',
       unique: true,
       required: true
-    },
-    password: {
-      type: 'string',
-      notNull: true,
-      defaultsTo: '', // There should be a better way to do this
-      password: true
-    },
-    salt: {
-      type: 'string'
     },
     provider: {
       type: 'string',
@@ -78,6 +66,26 @@ var User = {
       enum: ['user', 'admin'],
       defaultsTo: ['user']
     },
+    articles: {
+      collection: 'article',
+      via: 'id'
+    },
+    email: {
+      type: 'email',
+      required: function() {
+        return this.provider === 'local';
+      }
+    },
+    password: {
+      type: 'string',
+      password: true,
+      required: function() {
+        return this.provider === 'local';
+      }
+    },
+    salt: {
+      type: 'string'
+    },
     /* For reset password */
     resetPasswordToken: {
       type: 'string'
@@ -85,10 +93,7 @@ var User = {
     resetPasswordExpires: {
       type: 'datetime'
     },
-    articles: {
-      collection: 'article',
-      via: 'id'
-    },
+
     /**
      * Create instance method for authenticating user
      */
@@ -96,7 +101,7 @@ var User = {
 
       if (!password) return false;
       return this.password === User.hashPassword(password, this.salt);
-    },
+    }
   },
 
   /**
@@ -112,6 +117,18 @@ var User = {
     } else {
       return password;
     }
+  },
+
+  /**
+   * Hook a pre save method to hash the password
+   */
+  beforeCreate: function (values, next) {
+
+    if (values.password && values.password.length > 6) {
+      values.salt = crypto.randomBytes(16).toString('base64');
+      values.password = this.hashPassword(values.password, values.salt);
+    }
+    next();
   },
 
   /**
@@ -139,36 +156,19 @@ var User = {
   },
 
   /**
-   * Hook a pre save method to hash the password
-   */
-  beforeCreate: function (values, next) {
-
-    // Validate password
-    if (values.provider === 'local') {
-      if (values.password === '') values.password = undefined;
-    }
-
-    if (values.password && values.password.length > 6) {
-      values.salt = crypto.randomBytes(16).toString('base64');
-      values.password = this.hashPassword(values.password, values.salt);
-    }
-    next();
-  },
-
-  /**
    * Hook a pre update method in order to change the given name and password
    */
   beforeUpdate: function (values, next) {
-
-    // Update given name if new first or last name is provided
-    if (values.firstName || values.lastName) {
-      values.displayName = values.firstName + ' ' + values.lastName;
-    }
 
     // Update password if new password is provided
     if (values.password && values.password.length > 6) {
       values.salt = crypto.randomBytes(16).toString('base64');
       values.password = this.hashPassword(values.password, values.salt);
+    }
+
+    // Update given name if new first or last name is provided
+    if (values.firstName || values.lastName) {
+      values.displayName = values.firstName + ' ' + values.lastName;
     }
 
     next();

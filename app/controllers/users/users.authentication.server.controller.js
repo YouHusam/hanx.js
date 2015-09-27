@@ -44,7 +44,7 @@ exports.signup = function (request, reply) {
  */
 var cleanUser = function (user) {
 
-  // Copy user and remove sensetive and useless data
+  // Copy user and remove sensitive and useless data
   var cleanedUser = {};
   cleanedUser.id = user.id;
   cleanedUser.displayName = user.displayName;
