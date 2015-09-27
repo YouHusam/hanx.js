@@ -40,13 +40,13 @@ exports.read = function (request, reply) {
 exports.update = function (request, reply) {
 
   var Article = request.collections.article;
-  Article.update(request.pre.article, request.payload,
+  Article.update({id: request.pre.article.id}, request.payload,
     function (err, article) {
 
       if (err) {
         return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
       } else {
-        reply(article);
+        reply(article[0]);
       }
   });
 };
@@ -58,7 +58,7 @@ exports.delete = function (request, reply) {
 
   var Article = request.collections.article;
   var article = request.pre.article;
-  Article.destroy(article, function (err) {
+  Article.destroy({id: article.id}, function (err) {
 
     if (err) {
       return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
@@ -98,7 +98,7 @@ exports.articleByID = function (request, reply) {
 
     if (err) return reply(err);
     if (!article) {
-      return reply(Boom.notfound('Article not found'));
+      return reply(Boom.notFound('Article not found'));
     }
     reply(article);
   });
@@ -110,7 +110,7 @@ exports.articleByID = function (request, reply) {
 exports.hasAuthorization = function (request, reply) {
 
   if (request.pre.article.user.id.toString() !==
-      request.auth.credentials._id.toString()) {
+      request.auth.credentials.id.toString()) {
     return reply(Boom.forbidden('User is not authorized'));
   }
   reply();

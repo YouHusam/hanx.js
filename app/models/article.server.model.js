@@ -26,8 +26,7 @@ var Article = {
     title: {
       type: 'string',
       defaultsTo: '',
-      required: true,
-      empty: false
+      required: true
     },
     content: {
       type: 'text',
