@@ -5,7 +5,7 @@
  */
 var _              = require('lodash'),
     Boom           = require('boom'),
-    Errorhandler   = require('../errors.server.controller');
+    ErrorHandler   = require('../errors.server.controller');
 
 /**
  * Signup
@@ -27,7 +27,7 @@ exports.signup = function (request, reply) {
   User.create(user, function (err) {
 
     if (err) {
-      return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+      return reply(Boom.badRequest(ErrorHandler.getErrorMessage(err)));
     } else {
       // Remove sensitive data before login
       delete user.password;
@@ -55,7 +55,14 @@ var cleanUser = function (user) {
   cleanedUser.email = user.email;
   cleanedUser.lastName = user.lastName;
   cleanedUser.firstName = user.firstName;
-  cleanedUser.additionalProvidersData = user.additionalProvidersData;
+  if (user.additionalProvidersData) {
+    cleanedUser.additionalProvidersData = user.additionalProvidersData;
+    for (var provider in cleanedUser.additionalProvidersData) {
+      delete cleanedUser.additionalProvidersData[provider].accessToken;
+    }
+  }
+  if (cleanedUser.providerData)
+    delete cleanedUser.providerData.accessToken;
 
   return cleanedUser;
 };
@@ -207,12 +214,12 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 /**
  * Remove OAuth provider
  */
-exports.removeOAuthProvider = function (request, reply, next) {
+exports.removeOAuthProvider = function (request, reply) {
 
   var User = request.collections.user;
 
   var user = request.session.get(request.server.app.sessionName);
-  var provider = request.params.provider;
+  var provider = request.query.provider;
 
   if (user && provider) {
     // Delete the additional provider
@@ -220,20 +227,19 @@ exports.removeOAuthProvider = function (request, reply, next) {
       delete user.additionalProvidersData[provider];
     }
 
-    User.update(request.auth.credentials, user, function (err) {
+    User.update(request.auth.credentials.id, user)
+      .exec(function (err, user) {
 
-      if (err) {
-        return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-      } else {
-        request.login(user, function (err) {
+        if (err) {
+          return reply(Boom.badRequest(ErrorHandler.getErrorMessage(err)));
+        } else {
+          var authedUser = cleanUser(user[0]);
 
-          if (err) {
-            reply(Boom.badRequest(err));
-          } else {
-            reply(user);
-          }
-        });
-      }
+          request.session.set(request.server.app.sessionName, authedUser);
+          return reply(authedUser);
+        }
     });
+  } else {
+    return reply(Boom.badRequest('Invalid provider'));
   }
 };

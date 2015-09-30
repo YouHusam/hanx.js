@@ -41,5 +41,8 @@ exports.update = function (request, reply) {
 exports.me = function (request, reply) {
 
   var user = request.auth.credentials;
-    reply({user: user});
+    reply({
+      user:
+        require('./users.authentication.server.controller.js').cleanUser(user)
+    });
 };
