@@ -15,7 +15,7 @@ exports.strategyConfig = {
   password: Config.sessionSecret,
   clientId: Config.twitter.clientID,
   clientSecret: Config.twitter.clientSecret,
-  isSecure: false,     // Terrible idea but required if not using HTTPS
+  isSecure: process.env.NODE_ENV === 'secure',
 };
 
 exports.preTwitter = function (request, reply) {

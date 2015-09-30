@@ -16,7 +16,7 @@ exports.strategyConfig = {
   clientId: Config.linkedin.clientID,
   clientSecret: Config.linkedin.clientSecret,
   scope: ['r_basicprofile', 'r_emailaddress'],
-  isSecure: false     // Terrible idea but required if not using HTTPS
+  isSecure: process.env.NODE_ENV === 'secure'
 };
 
 exports.preLinkedin = function (request, reply) {

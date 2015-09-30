@@ -15,7 +15,7 @@ exports.strategyConfig = {
   password: Config.sessionSecret,
   clientId: Config.github.clientID,
   clientSecret: Config.github.clientSecret,
-  isSecure: false     // Terrible idea but required if not using HTTPS
+  isSecure: process.env.NODE_ENV === 'secure'
 };
 
 exports.preGithub = function (request, reply) {

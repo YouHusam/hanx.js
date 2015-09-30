@@ -15,7 +15,7 @@ exports.strategyConfig = {
   password: Config.sessionSecret,
   clientId: Config.facebook.clientID,
   clientSecret: Config.facebook.clientSecret,
-  isSecure: false,     // Terrible idea but required if not using HTTPS
+  isSecure: process.env.NODE_ENV === 'secure',
 };
 
 exports.preFacebook = function (request, reply) {

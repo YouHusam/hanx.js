@@ -15,7 +15,7 @@ exports.strategyConfig = {
   password: Config.sessionSecret,
   clientId: Config.google.clientID,
   clientSecret: Config.google.clientSecret,
-  isSecure: false     // Terrible idea but required if not using HTTPS
+  isSecure: process.env.NODE_ENV === 'secure'
 };
 
 exports.preGoogle = function (request, reply) {

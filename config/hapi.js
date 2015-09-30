@@ -33,7 +33,28 @@ module.exports = function () {
 
   // Initialize hapi app
   var server = new Hapi.Server(serverOptions);
-  server.connection({port: Config.port});
+
+  // Setup https server if NODE_ENV is secure
+  if (process.env.NODE_ENV === 'secure') {
+    // Load SSL key and certificate
+    var privateKey = Fs.readFileSync('./config/sslcerts/key.pem', 'utf8');
+    var certificate = Fs.readFileSync('./config/sslcerts/cert.pem', 'utf8');
+
+    // Create HTTPS Server
+    var httpsServer = Https.createServer({
+      key: privateKey,
+      cert: certificate
+    });
+
+    server.connection({
+      listener: httpsServer,
+      tls: true,
+      autoListen: true,
+      port: Config.port
+    });
+  } else {
+  }
+  server.connection({port: '3000'});
 
   // Setup global variables
   server.app.sessionName = Config.sessionName;
@@ -74,7 +95,7 @@ module.exports = function () {
         expiresIn: 1000 * 60 * 60 * 24,
         cookieOptions: {
           path: '/',
-          isSecure: false,
+          isSecure: process.env.NODE_ENV === 'secure',
           password: Config.sessionSecret
         }
       }
@@ -148,21 +169,6 @@ module.exports = function () {
     }
     return reply.continue();
   });
-
-  if (process.env.NODE_ENV === 'secure') {
-    // Load SSL key and certificate
-    var privateKey = Fs.readFileSync('./config/sslcerts/key.pem', 'utf8');
-    var certificate = Fs.readFileSync('./config/sslcerts/cert.pem', 'utf8');
-
-    // Create HTTPS Server
-    var httpsServer = Https.createServer({
-      key: privateKey,
-      cert: certificate
-    }, server);
-
-    // Return HTTPS server instance
-    return httpsServer;
-  }
 
   // Return Hapi server instance
   return server;
