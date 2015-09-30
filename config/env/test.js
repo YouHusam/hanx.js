@@ -2,10 +2,18 @@
 
 module.exports = {
   db: {
-    uri: 'mongodb://localhost/mean-test',
-    options: {
-      user: '',
-      pass: ''
+    pg: {
+      host: process.env.PG_HOST || 'localhost',
+      port: process.env.PG_PORT ||  5432,
+      database: process.env.PG_DB || 'test',
+      user: process.env.PG_USER || 'hanx',
+      password: process.env.PG_PASSWORD || 'password'
+    },
+    mongodb: {
+      host: process.env.MONGO_HOST || '127.0.0.1',
+      port: process.env.MONGO_PORT ||  27017,
+      user: process.env.MONGO_USER || '',
+      password: process.env.MONGO_PASSWORD || ''
     }
   },
   port: 3001,

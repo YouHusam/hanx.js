@@ -4,7 +4,6 @@
  * Module dependencies.
  */
 var path   = require('path'),
-    Boom   = require('boom'),
     Config = require('./config');
 
 /**

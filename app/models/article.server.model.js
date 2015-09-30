@@ -10,7 +10,7 @@ var Uuid = require('node-uuid');
  */
 var Article = {
   identity: 'article',
-  connection: 'postgreDev',
+  connection: 'postgreDefault',
   autoPK: false,
   autoCreatedAt: true,
   attributes: {

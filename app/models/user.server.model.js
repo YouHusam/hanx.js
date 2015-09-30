@@ -12,7 +12,7 @@ var Uuid     = require('node-uuid'),
 var User = {
 
   identity: 'user',
-  connection: 'postgreDev',
+  connection: 'postgreDefault',
   autoPK: false,
   autoCreatedAt: true,
   autoUpdatedAt: true,

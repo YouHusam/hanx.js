@@ -2,10 +2,18 @@
 
 module.exports = {
   db: {
-    uri: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://' + (process.env.DB_1_PORT_27017_TCP_ADDR || 'localhost') + '/mean',
-    options: {
-      user: '',
-      pass: ''
+    pg: {
+      host: process.env.PG_HOST || 'localhost',
+      port: process.env.PG_PORT ||  5432,
+      database: process.env.PG_DB || 'hanx',
+      user: process.env.PG_USER || 'hanx',
+      password: process.env.PG_PASSWORD || 'password'
+    },
+    mongodb: {
+      host: process.env.MONGO_HOST || '127.0.0.1',
+      port: process.env.MONGO_PORT ||  27017,
+      user: process.env.MONGO_USER || '',
+      password: process.env.MONGO_PASSWORD || ''
     }
   },
   log: {
@@ -21,7 +29,7 @@ module.exports = {
     lib: {
       css: [
         'public/lib/bootstrap/dist/css/bootstrap.min.css',
-        'public/lib/bootstrap/dist/css/bootstrap-theme.min.css',
+        'public/lib/bootstrap/dist/css/bootstrap-theme.min.css'
       ],
       js: [
         'public/lib/angular/angular.min.js',

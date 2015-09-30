@@ -23,6 +23,7 @@
     "bell": "~5.x.x",
     "boom": "~2.8.0",
     "bower": "~1.4.1",
+    "catbox": "^6.0.0",
     "catbox-mongodb": "^1.1.0",
     "chalk": "~1.1.0",
     "dogwater": "^1.0.0",

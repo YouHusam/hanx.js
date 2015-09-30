@@ -4,21 +4,25 @@
  * Module dependencies.
  */
 var Fs         = require('fs'),
-    Http       = require('http'),
     Https      = require('https'),
     Hapi       = require('hapi'),
     Logger     = require('./logger'),
     Config     = require('./config'),
-    Boom       = require('boom'),
     Dogwater   = require('dogwater'),
     pg         = require('sails-postgresql'),
+    Catbox     = require('catbox'),
     Path       = require('path');
 
 module.exports = function () {
 
   var serverOptions = {
     cache:{
-      engine: require('catbox-mongodb')
+      engine: new Catbox.Client(require('catbox-mongodb'), {
+        host: Config.db.mongodb.host,
+        port: Config.db.mongodb.port,
+        username: Config.db.mongodb.username,
+        password: Config.db.mongodb.password
+      })
     },
     connections: {
       router: {
@@ -40,7 +44,7 @@ module.exports = function () {
     models.push(require(Path.resolve(modelPath)));
   });
 
-  var plugins =[
+  var plugins = [
     { register: require('bell') },
     {
       register: Dogwater,
@@ -50,12 +54,13 @@ module.exports = function () {
           postgre: pg
         },
         connections: {
-          postgreDev: {
+          postgreDefault: {
             adapter: 'postgre',
-            host: 'localhost',
-            database: 'development',
-            user: 'husam',
-            password: 'password'
+            host: Config.db.pg.host,
+            port: Config.db.pg.port,
+            database: Config.db.pg.database,
+            user: Config.db.pg.user,
+            password: Config.db.pg.password
           }
         },
         models: models
@@ -98,7 +103,7 @@ module.exports = function () {
       'server.view.html': require('swig')
     },
     path: './app/views',
-    isCached: process.env.NODE_ENV === 'development' ? false : true,
+    isCached: process.env.NODE_ENV !== 'development',
     context: {
       title: Config.app.title,
       description: Config.app.description,

@@ -8,11 +8,12 @@
 
 module.exports = {
   db: {
-    uri: 'mongodb://localhost/local-dev',
-    options: {
-      user: '',
-      pass: ''
-    }
+     pg: {
+       host: process.env.PG_HOST || 'localhost',
+       database: process.env.PG_DB || 'development',
+       user: process.env.PG_USER || 'hanx',
+       password: process.env.PG_PASSWORD || 'password'
+     }
   },
   facebook: {
     clientID: process.env.FACEBOOK_ID || 'APP_ID',
