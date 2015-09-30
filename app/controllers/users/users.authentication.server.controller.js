@@ -199,7 +199,7 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
         user.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
 
         // And save the user
-        User.update(AuthUser, user, function (err) {
+        User.update({id: AuthUser.id}, user, function (err) {
 
           return done(err, user, '/#!/settings/accounts');
         });
