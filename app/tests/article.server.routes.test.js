@@ -1,23 +1,38 @@
 'use strict';
 
-var Should     = require('should'),
-    Code       = require('code'),
-    Server     = require('../../server'),
-    Mongoose   = require('mongoose'),
-    User       = Mongoose.model('User'),
-    Article    = Mongoose.model('Article');
+var Code       = require('code'),
+    Server     = require('../../server');
 
 /**
  * Globals
  */
-var credentials, user, article;
+var credentials, user, article, Article, User;
+
+var init = function (cb) {
+
+  User = Server.plugins.dogwater.collections.user;
+  Article = Server.plugins.dogwater.collections.article;
+  cb();
+};
 
 /**
  * Article routes tests
  */
-describe('Article CRUD tests', function() {
+describe('Article CRUD tests', function () {
 
-  beforeEach(function(done) {
+  before(function (done) {
+
+    if (Server.plugins.dogwater){
+      init(done);
+    } else {
+      Server.on('pluginsLoaded', function () {
+
+        init(done);
+      });
+    }
+  });
+
+  beforeEach(function (done) {
     // Create user credentials
     credentials = {
       username: 'username',
@@ -25,7 +40,7 @@ describe('Article CRUD tests', function() {
     };
 
     // Create a new user
-    user = new User({
+    user = {
       firstName: 'Full',
       lastName: 'Name',
       displayName: 'Full Name',
@@ -33,20 +48,23 @@ describe('Article CRUD tests', function() {
       username: credentials.username,
       password: credentials.password,
       provider: 'local'
-    });
+    };
 
     // Save a user to the test db and create new article
-    user.save(function() {
+    User.create(user, function (err, newUser) {
+
+      user = newUser;
       article = {
         title: 'Article Title',
-        content: 'Article Content'
+        content: 'Article Content',
+        user: user.id
       };
 
       done();
     });
   });
 
-  it('should be able to save an article if logged in', function(done) {
+  it('should be able to save an article if logged in', function (done) {
 
     // Save a new article
     Server.inject({
@@ -54,7 +72,7 @@ describe('Article CRUD tests', function() {
       url: '/articles',
       payload: article,
       credentials: user
-    }, function(response) {
+    }, function (response) {
 
       // Get the userID
       var userId = user.id;
@@ -67,8 +85,8 @@ describe('Article CRUD tests', function() {
       Server.inject({
         method: 'GET',
         url: '/articles',
-        credntials: user
-      }, function(response) {
+        credentials: user
+      }, function (response) {
 
         // Handle article getting error
         if(response.result.error)
@@ -78,7 +96,7 @@ describe('Article CRUD tests', function() {
         var articles = response.result;
 
         // Set assertions
-        Code.expect(articles[0].user._id.toString()).to.equal(userId);
+        Code.expect(articles[0].user.id.toString()).to.equal(userId);
         Code.expect(articles[0].title).to.equal('Article Title');
 
         // Call the assertion callback
@@ -87,49 +105,50 @@ describe('Article CRUD tests', function() {
     });
   });
 
-  it('should not be able to save an article if not logged in', function(done) {
+  it('should not be able to save an article if not logged in', function (done) {
 
     Server.inject({
       method: 'POST',
       url: '/articles',
       payload: article
-    }, function(response) {
+    }, function (response) {
 
       Code.expect(response.statusCode, response.result.message).to.equal(401);
       done();
     });
   });
 
-  it('should not be able to save an article if no title is provided', function(done) {
+  it('should not be able to save an article if no title is provided',
+    function (done) {
 
-    // Invalidate title field
-    article.title = '';
+      // Invalidate title field
+      article.title = '';
 
-    // Save a new article
-    Server.inject({
-      method: 'POST',
-      url: '/articles',
-      credentials: user
-    }, function(response) {
+      // Save a new article
+      Server.inject({
+        method: 'POST',
+        url: '/articles',
+        credentials: user
+      }, function (response) {
 
-      Code.expect(response.statusCode, response.result.message).to.equal(400);
+        Code.expect(response.statusCode, response.result.message).to.equal(400);
 
-      // Set message assertion
-      Code.expect(response.result.message).to.equal('Title cannot be blank');
+        // Set message assertion
+        Code.expect(response.result.message).to.equal('Title cannot be blank');
 
-      // Handle article save error
-      done();
-    });
+        // Handle article save error
+        done();
+      });
   });
 
-  it('should be able to update an article if signed in', function(done) {
+  it('should be able to update an article if signed in', function (done) {
 
     Server.inject({
       method: 'POST',
       url: '/articles',
       credentials: user,
       payload: article
-    }, function(saveResponse) {
+    }, function (saveResponse) {
 
       // Get the userId
       var userId = user.id;
@@ -146,10 +165,10 @@ describe('Article CRUD tests', function() {
 
       Server.inject({
         method: 'PUT',
-        url:'/articles/' + saveResponse.result._id.toString(),
+        url:'/articles/' + saveResponse.result.id.toString(),
         credentials: user,
         payload: article
-      }, function(updateResponse) {
+      }, function (updateResponse) {
 
         Code.expect(updateResponse.statusCode,
           updateResponse.result.message).to.equal(200);
@@ -159,9 +178,11 @@ describe('Article CRUD tests', function() {
           done(new Error(updateResponse.result.message));
 
         // Set assertions
-        Code.expect(updateResponse.result._id.toString())
-            .to.equal(saveResponse.result._id.toString());
-        Code.expect(updateResponse.result.title).to.equal('WHY YOU GOTTA BE SO MEAN?');
+        Code.expect(updateResponse.result.user.id.toString()).to.equal(userId);
+        Code.expect(updateResponse.result.id.toString())
+            .to.equal(saveResponse.result.id.toString());
+        Code.expect(updateResponse.result.title).
+          to.equal('WHY YOU GOTTA BE SO MEAN?');
 
         done();
 
@@ -169,42 +190,40 @@ describe('Article CRUD tests', function() {
     });
   });
 
-  it('should be able to get a list of articles if not signed in', function(done) {
+  it('should be able to get a list of articles if not signed in',
+    function (done) {
 
-    // Create new article model instance
-    var articleObj = new Article(article);
+      // Save the article
+      Article.create(article, function (err, article) {
 
-    // Save the article
-    articleObj.save(function() {
+        if (err) return done(err);
+        // Request articles
+        Server.inject({
+          method: 'GET',
+          url: '/articles'
+        }, function (response) {
 
-      // Request articles
-      Server.inject({
-        method: 'GET',
-        url: '/articles'
-      }, function(response) {
+          // Set assertion
+          Code.expect(response.result).to.be.an.array().and.to.have.length(1);
 
-        // Set assertion
-        Code.expect(response.result).to.be.an.array().and.to.have.length(1);
+          // Call the assertion callback
+          done();
+        });
 
-        // Call the assertion callback
-        done();
       });
-
-    });
   });
 
-  it('should be able to get a single article if not signed in', function(done) {
-
-    // Create new article model instance
-    var articleObj = new Article(article);
+  it('should be able to get a single article if not signed in', function (done) {
 
     // Save the article
-    articleObj.save(function() {
+    Article.create(article, function (err, article) {
+
+      if (err) return done(err);
 
       Server.inject({
         method: 'GET',
-        url: '/articles/' + articleObj._id.toString()
-      }, function(response) {
+        url: '/articles/' + article.id.toString()
+      }, function (response) {
 
         // Set assertion
         // For some reason it returns document object instead of normal object
@@ -217,31 +236,31 @@ describe('Article CRUD tests', function() {
     });
   });
 
-  it('should return proper error for single article which doesnt exist, if not signed in',
-    function(done) {
+  it('should return 404 page for single article which doesnt exist, if not signed in',
+    function (done) {
 
       Server.inject({
         method: 'GET',
         url: '/articles/test'
-      }, function(response) {
+      }, function (response) {
 
         // Set assertion
-        Code.expect(response.result).to.be.an.object().
-          and.to.include({'message': 'Article is invalid'});
+        Code.expect(response.result).to.be.a.string().
+          and.to.include('Page Not Found');
 
         // Call the assertion callback
         done();
       });
   });
 
-  it('should be able to delete an article if signed in', function(done) {
+  it('should be able to delete an article if signed in', function (done) {
 
     Server.inject({
       method: 'POST',
       url: '/articles',
       credentials: user,
       payload: article
-    }, function(articleSaveRes) {
+    }, function (articleSaveRes) {
 
       Code.expect(articleSaveRes.statusCode,
         articleSaveRes.result.message).to.equal(200);
@@ -252,10 +271,10 @@ describe('Article CRUD tests', function() {
 
       Server.inject({
         method: 'DELETE',
-        url: '/articles/' + articleSaveRes.result._id,
+        url: '/articles/' + articleSaveRes.result.id,
         credentials: user,
         payload: article
-      }, function(articleDeleteRes) {
+      }, function (articleDeleteRes) {
 
         Code.expect(articleDeleteRes.statusCode,
           articleDeleteRes.result.message).to.equal(200);
@@ -265,30 +284,29 @@ describe('Article CRUD tests', function() {
           done(new Error(articleDeleteRes.result.message));
 
       // Set assertions
-      Code.expect(articleDeleteRes.result._id.toString())
-        .to.be.equal(articleSaveRes.result._id.toString());
+      Code.expect(articleDeleteRes.result.id.toString())
+        .to.be.equal(articleSaveRes.result.id.toString());
 
       done();
       });
     });
   });
 
-  it('should not be able to delete an article if not signed in', function(done) {
+  it('should not be able to delete an article if not signed in', function (done) {
 
     // Set article user
-    article.user = user;
-
-    // Create new article model instance
-    var articleObj = new Article(article);
+    article.user = user.id;
 
     // Save the article
-    articleObj.save(function() {
+    Article.create(article, function (err, article) {
+
+      if (err) return done(err);
 
       // Try deleting article
       Server.inject({
         method: 'DELETE',
-        url: '/articles/' + articleObj._id
-      },function(response) {
+        url: '/articles/' + article.id
+      },function (response) {
 
         Code.expect(response.statusCode, response.result.message).to.be.equal(401);
         // Set message assertion
@@ -301,9 +319,10 @@ describe('Article CRUD tests', function() {
     });
   });
 
-  afterEach(function(done) {
-    User.remove().exec(function() {
-      Article.remove().exec(done);
+  afterEach(function (done) {
+    User.destroy({}).exec(function () {
+
+      Article.destroy({}).exec(done);
     });
   });
 });

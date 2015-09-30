@@ -3,45 +3,72 @@
 /**
  * Module dependencies.
  */
-var should    = require('should'),
-    mongoose  = require('mongoose'),
-    User      = mongoose.model('User'),
-    Article   = mongoose.model('Article');
+var should     = require('should'),
+    Server     = require('../../server'),
+    Config     = require('../../config/config');
 
 /**
  * Globals
  */
-var user, article;
+var user, article, User, Article;
+
+var init = function (cb){
+
+  User = Server.plugins.dogwater.collections.user;
+  Article = Server.plugins.dogwater.collections.article;
+  cb();
+};
 
 /**
  * Unit tests
  */
 describe('Article Model Unit Tests:', function() {
+
+  before(function (done) {
+
+    if (Server.plugins.dogwater){
+      init(done);
+    } else {
+      Server.on('pluginsLoaded', function () {
+
+        init(done);
+      });
+    }
+  });
+
   beforeEach(function(done) {
-    user = new User({
+
+    user = {
       firstName: 'Full',
       lastName: 'Name',
       displayName: 'Full Name',
       email: 'test@test.com',
+      provider: 'local',
       username: 'username',
       password: 'password'
-    });
+    };
 
-    user.save(function() {
-      article = new Article({
+    User.create(user, function(err, user) {
+
+      if (err)
+        return done(err);
+      article = {
         title: 'Article Title',
         content: 'Article Content',
-        user: user
-      });
+        user: user.id
+      };
 
       done();
     });
   });
 
   describe('Method Save', function() {
+
     it('should be able to save without problems', function(done) {
-      return article.save(function(err) {
+
+      return Article.create(article, function(err, article) {
         should.not.exist(err);
+        should.exist(article);
         done();
       });
     });
@@ -49,7 +76,8 @@ describe('Article Model Unit Tests:', function() {
     it('should be able to show an error when try to save without title', function(done) {
       article.title = '';
 
-      return article.save(function(err) {
+      return Article.create(article, function(err, article) {
+
         should.exist(err);
         done();
       });
@@ -57,8 +85,10 @@ describe('Article Model Unit Tests:', function() {
   });
 
   afterEach(function(done) {
-    Article.remove().exec(function() {
-      User.remove().exec(done);
+
+    Article.destroy({}).exec(function() {
+
+      User.destroy({}).exec(done);
     });
   });
 });

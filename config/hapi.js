@@ -95,6 +95,7 @@ module.exports = function () {
     if (err) {
       console.error(err);
     }
+    server.emit('pluginsLoaded');
   });
 
   // Set swig as the template engine and views path

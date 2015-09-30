@@ -46,7 +46,15 @@ exports.update = function (request, reply) {
       if (err) {
         return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
       } else {
-        reply(article[0]);
+        Article.findOne(article).populate('user')
+          .exec(function (err, article) {
+
+            if (err) return reply(err);
+            if (!article) {
+              return reply(Boom.notFound('Article not found'));
+            }
+            reply(article);
+          });
       }
   });
 };
@@ -63,7 +71,7 @@ exports.delete = function (request, reply) {
     if (err) {
       return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
     } else {
-      reply();
+      reply(article);
     }
   });
 };

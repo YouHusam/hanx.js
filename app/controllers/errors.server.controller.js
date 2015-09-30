@@ -16,7 +16,7 @@ exports.getErrorMessage = function (err) {
         switch (err.invalidAttributes[attribute][errRule].rule) {
           case 'required':
             attribute = attribute.charAt(0).toUpperCase() + attribute.substring(1);
-            message = attribute + ' is should not be blank.';
+            message = attribute + ' cannot be blank';
             break;
           case 'email':
             message = 'Invalid email format.';
