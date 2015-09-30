@@ -2,6 +2,7 @@
 
 module.exports = {
   port: 8443,
+  passphrase: process.env.SSL_PASSWORD || 'password',
   db: {
     pg: {
       host: process.env.PG_HOST || 'localhost',

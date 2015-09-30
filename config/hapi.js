@@ -43,7 +43,8 @@ module.exports = function () {
     // Create HTTPS Server
     var httpsServer = Https.createServer({
       key: privateKey,
-      cert: certificate
+      cert: certificate,
+      passphrase: Config.passphrase
     });
 
     server.connection({
@@ -53,8 +54,8 @@ module.exports = function () {
       port: Config.port
     });
   } else {
+    server.connection({port: Config.port});
   }
-  server.connection({port: '3000'});
 
   // Setup global variables
   server.app.sessionName = Config.sessionName;
