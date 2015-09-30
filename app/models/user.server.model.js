@@ -52,8 +52,8 @@ var User = {
     },
     username: {
       type: 'string',
-      unique: true,
-      required: true
+      required: true,
+      unique: true
     },
     provider: {
       type: 'string',
@@ -71,17 +71,17 @@ var User = {
       via: 'id'
     },
     email: {
-      type: 'email',
       required: function() {
         return this.provider === 'local';
-      }
+      },
+      type: 'email'
     },
     password: {
       type: 'string',
-      password: true,
       required: function() {
         return this.provider === 'local';
-      }
+      },
+      password: true
     },
     salt: {
       type: 'string'
