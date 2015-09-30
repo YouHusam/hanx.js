@@ -3,143 +3,167 @@
 /**
  * Module dependencies.
  */
-var Fs 			= require('fs'),
-		Http 		= require('http'),
-		Https 	= require('https'),
-		Hapi 		= require('hapi'),
-		Logger 	= require('./logger'),
-		Config 	= require('./config'),
-		Boom 		= require('boom'),
-		Path 		= require('path');
+var Fs         = require('fs'),
+    Https      = require('https'),
+    Hapi       = require('hapi'),
+    Logger     = require('./logger'),
+    Config     = require('./config'),
+    Dogwater   = require('dogwater'),
+    pg         = require('sails-postgresql'),
+    Catbox     = require('catbox'),
+    Path       = require('path');
 
-module.exports = function (db) {
+module.exports = function () {
 
-	var serverOptions = {
-		cache:{
-			engine: require('catbox-mongodb')
-		}
-	};
+  var serverOptions = {
+    cache:{
+      engine: new Catbox.Client(require('catbox-mongodb'), {
+        host: Config.db.mongodb.host,
+        port: Config.db.mongodb.port,
+        username: Config.db.mongodb.username,
+        password: Config.db.mongodb.password
+      })
+    },
+    connections: {
+      router: {
+        stripTrailingSlash: true
+      }
+    }
+  };
 
-	// Initialize hapi app
-	var server = new Hapi.Server(serverOptions);
-	server.connection({port: Config.port});
+  // Initialize hapi app
+  var server = new Hapi.Server(serverOptions);
+  server.connection({port: Config.port});
 
-	// Setup global variables
-	server.app.sessionName = Config.sessionName;
+  // Setup global variables
+  server.app.sessionName = Config.sessionName;
 
-	// Globbing model files
-	Config.getGlobbedFiles('./app/models/**/*.js').forEach(function (modelPath) {
-		require(Path.resolve(modelPath));
-	});
+  // Globbing model files
+  var models = [];
+  Config.getGlobbedFiles('./app/models/**/*.js').forEach(function (modelPath) {
+    models.push(require(Path.resolve(modelPath)));
+  });
 
-	var plugins =[
-		{ register: require('bell') },
-		{
-			register: require('yar'),
-			options: {
-				name: server.app.sessionName,
-				maxCookieSize: 0,
-				expiresIn: 1000 * 60 * 60 * 24,
-				cookieOptions: {
-					path: '/',
-					isSecure: false,
-					password: Config.sessionSecret
-				}
-			}
-	 }
-	];
+  var plugins = [
+    { register: require('bell') },
+    {
+      register: Dogwater,
+      options: {
+        adapters: {
+          'default': pg,
+          postgre: pg
+        },
+        connections: {
+          postgreDefault: {
+            adapter: 'postgre',
+            host: Config.db.pg.host,
+            port: Config.db.pg.port,
+            database: Config.db.pg.database,
+            user: Config.db.pg.user,
+            password: Config.db.pg.password
+          }
+        },
+        models: models
+      }
+    },
+    {
+      register: require('yar'),
+      options: {
+        name: server.app.sessionName,
+        maxCookieSize: 0,
+        expiresIn: 1000 * 60 * 60 * 24,
+        cookieOptions: {
+          path: '/',
+          isSecure: false,
+          password: Config.sessionSecret
+        }
+      }
+   }
+  ];
 
-	if (Config.log.enabled) {
-		plugins.push(		{
-			register: require('good'),
-			options: {
-				reporters: Logger.getLogReporters()
-			}
-		});
-	}
+  if (Config.log.enabled) {
+    plugins.push({
+      register: require('good'),
+      options: {
+        reporters: Logger.getLogReporters()
+      }
+    });
+  }
 
-	// Register plugins
-	server.register(plugins, function (err) {
-		if (err) {
-			console.error(err);
-		}
-	});
+  // Register plugins
+  server.register(plugins, function (err) {
+    if (err) {
+      console.error(err);
+    }
+    server.emit('pluginsLoaded');
+  });
 
-	// Set swig as the template engine and views path
-	server.views({
-		engines: {
-			'server.view.html': require('swig')
-		},
-		path: './app/views',
-		isCached: process.env.NODE_ENV === 'development' ? false : true,
-		context: {
-			title: Config.app.title,
-			description: Config.app.description,
-			keywords: Config.app.keywords,
-			facebookAppId: Config.facebook.clientID,
-			jsFiles: Config.getJavaScriptAssets(),
-			cssFiles: Config.getCSSAssets()
-		}
-	});
+  // Set swig as the template engine and views path
+  server.views({
+    engines: {
+      'server.view.html': require('swig')
+    },
+    path: './app/views',
+    isCached: process.env.NODE_ENV !== 'development',
+    context: {
+      title: Config.app.title,
+      description: Config.app.description,
+      keywords: Config.app.keywords,
+      facebookAppId: Config.facebook.clientID,
+      jsFiles: Config.getJavaScriptAssets(),
+      cssFiles: Config.getCSSAssets()
+    }
+  });
 
-	// Handle extra slashes in the end of URLs
-	server.ext('onRequest', function (request, reply) {
+  // Setting the app router and static folder
+  server.route({
+    method: 'GET',
+    path: '/{path*}',
+    handler: {
+       directory: {
+        path: Path.resolve('./public'),
+        listing: false,
+        index: true
+      }
+    }
+  });
 
-		if (request.path !== '/' && request.path[request.path.length - 1] === '/') {
-			request.path = request.path.slice(0,-1);
-		}
-		reply.continue();
-	});
+  // Setup the authentication strategies
+  require('./session')(server);
+  require('./strategies')(server);
 
-	// Setting the app router and static folder
-	server.route({
-		method: 'GET',
-		path: '/{path*}',
-		handler: {
-	 		directory: {
-				path: Path.resolve('./public'),
-				listing: false,
-				index: true
-			}
-		}
-	});
+  // Globbing routing files
+  Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function (routePath) {
+    require(Path.resolve(routePath))(server);
+  });
 
-	// Setup the authentication strategies
-	require('./session')(server);
-	require('./strategies')(server);
+  // Hande 404 errors
+  server.ext('onPreResponse', function (request, reply) {
 
-	// Globbing routing files
-	Config.getGlobbedFiles('./app/routes/**/*.js').forEach(function (routePath) {
-		require(Path.resolve(routePath))(server);
-	});
+    if (request.response.isBoom) {
+      if(request.response.output.statusCode === 404)
+        return reply.view('404', {
+          url: request.url.path
+        });
+    }
+    return reply.continue();
+  });
 
-	// Hande 404 errors
-	server.ext('onPreResponse', function (request, reply) {
+  if (process.env.NODE_ENV === 'secure') {
+    // Load SSL key and certificate
+    var privateKey = Fs.readFileSync('./config/sslcerts/key.pem', 'utf8');
+    var certificate = Fs.readFileSync('./config/sslcerts/cert.pem', 'utf8');
 
-		if (request.response.isBoom) {
-			if(request.response.output.statusCode === 404)
-				return reply.view('404', {
-					url: request.url.path
-				});
-		}
-		return reply.continue();
-	});
+    // Create HTTPS Server
+    var httpsServer = Https.createServer({
+      key: privateKey,
+      cert: certificate
+    }, server);
 
-	if (process.env.NODE_ENV === 'secure') {
-		// Load SSL key and certificate
-		var privateKey = Fs.readFileSync('./config/sslcerts/key.pem', 'utf8');
-		var certificate = Fs.readFileSync('./config/sslcerts/cert.pem', 'utf8');
+    // Return HTTPS server instance
+    return httpsServer;
+  }
 
-		// Create HTTPS Server
-		var httpsServer = Https.createServer({
-			key: privateKey,
-			cert: certificate
-		}, server);
-
-		// Return HTTPS server instance
-		return httpsServer;
-	}
-
-	// Return Hapi server instance
-	return server;
+  // Return Hapi server instance
+  return server;
 };

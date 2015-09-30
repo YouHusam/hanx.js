@@ -1,42 +1,42 @@
 'use strict';
 
 /**
- * Get unique error field name
- */
-var getUniqueErrorMessage = function (err) {
-	var output;
-
-	try {
-		var fieldName = err.err.substring(err.err.lastIndexOf('.$') + 2, err.err.lastIndexOf('_1'));
-		output = fieldName.charAt(0).toUpperCase() + fieldName.slice(1) + ' already exists';
-
-	} catch (ex) {
-		output = 'Unique field already exists';
-	}
-
-	return output;
-};
-
-/**
- * Get the error message from error object
+ * Returns a better error message because waterline's errors are terrible.
+ * The order of the errors is the same order of the rules in the model.
+ * To change priority, change the order of rules.
+ * @param err Error object passed.
+ * @returns {string} Error message to be sent in reply.
  */
 exports.getErrorMessage = function (err) {
-	var message = '';
+  var message = '';
 
-	if (err.code) {
-		switch (err.code) {
-			case 11000:
-			case 11001:
-				message = getUniqueErrorMessage(err);
-				break;
-			default:
-				message = 'Something went wrong';
-		}
-	} else {
-		for (var errName in err.errors) {
-			if (err.errors[errName].message) message = err.errors[errName].message;
-		}
-	}
+  if (err.code === 'E_VALIDATION') {
+    for (var attribute in err.invalidAttributes) {
+      for (var errRule in err.invalidAttributes[attribute]) {
+        switch (err.invalidAttributes[attribute][errRule].rule) {
+          case 'required':
+            attribute = attribute.charAt(0).toUpperCase() + attribute.substring(1);
+            message = attribute + ' cannot be blank';
+            break;
+          case 'email':
+            message = 'Invalid email format.';
+            break;
+          case 'unique':
+            attribute = attribute.charAt(0).toUpperCase() + attribute.substring(1);
+            message = attribute + ' already exists.';
+            break;
+          case 'password':
+            message = 'Password should be at least 6 characters long.';
+            break;
+          default:
+            attribute = attribute.charAt(0).toUpperCase() + attribute.substring(1);
+            message = attribute + ' is invalid.';
+        }
+      }
+    }
+  } else {
+    message = 'Something went wrong';
+  }
 
-	return message;
+  return message;
 };

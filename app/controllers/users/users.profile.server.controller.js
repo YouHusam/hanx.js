@@ -3,53 +3,36 @@
 /**
  * Module dependencies.
  */
-var _ 						= require('lodash'),
-		Boom 					= require('boom'),
-		Errorhandler 	= require('../errors.server.controller.js'),
-		Mongoose 			= require('mongoose'),
-		User 					= Mongoose.model('User');
+var _              = require('lodash'),
+    Boom           = require('boom'),
+    Errorhandler   = require('../errors.server.controller.js');
 
 /**
  * Update user details
  */
 exports.update = function (request, reply) {
 
-	//TODO: FIX PASSWORD RESAVE
+  var User = request.collections.user;
 
-	// Init Variables
-	var reqUser = request.auth.credentials;
-	var message = null;
+  // Init Variables
+  var reqUser = request.auth.credentials;
 
-	// For security measurement we remove the roles from the request.body object
-	delete request.payload.roles;
-	delete reqUser.id;
+  // For security measurement we remove the roles from the request.paylad object
+  delete request.payload.roles;
+  delete request.payload.id;
 
-	User.findOne(reqUser, function (err, user) {
+  User.update(reqUser.id, request.payload).exec(function (err, user) {
+    if (err) {
+      return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 
-		if (user) {
-			// Merge existing user
-			user = _.extend(user, request.payload);
-			user.updated = Date.now();
-			user.displayName = user.firstName + ' ' + user.lastName;
+    } else {
+      var authedUser = require('./users.authentication.server.controller.js')
+          .cleanUser(user[0]);
 
-			user.save(function (err) {
-
-				if (err) {
-					return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-
-				} else {
-					var authedUser = require('./users.authentication.server.controller.js')
-							.cleanUser(user);
-
-					request.session.set(request.server.app.sessionName, authedUser);
-					return reply(authedUser);
-				}
-			});
-		} else {
-			reply(Boom.badRequest('User is not signed in'));
-		}
-	});
-
+      request.session.set(request.server.app.sessionName, authedUser);
+      return reply(authedUser);
+    }
+  });
 };
 
 /**
@@ -57,6 +40,9 @@ exports.update = function (request, reply) {
  */
 exports.me = function (request, reply) {
 
-	var user = request.auth.credentials;
-		reply({user: user});
+  var user = request.auth.credentials;
+    reply({
+      user:
+        require('./users.authentication.server.controller.js').cleanUser(user)
+    });
 };

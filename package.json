@@ -23,8 +23,10 @@
     "bell": "~5.x.x",
     "boom": "~2.8.0",
     "bower": "~1.4.1",
+    "catbox": "^6.0.0",
     "catbox-mongodb": "^1.1.0",
     "chalk": "~1.1.0",
+    "dogwater": "^1.0.0",
     "forever": "~0.15.1",
     "glob": "~5.0.14",
     "good": "~6.3.0",
@@ -39,8 +41,11 @@
     "lodash": "~3.10.0",
     "mongodb": "^2.x.x",
     "mongoose": "^4.1.0",
+    "node-uuid": "^1.4.3",
     "nodemailer": "~1.4.0",
+    "sails-postgresql": "^0.10.16",
     "swig": "~1.4.2",
+    "waterline": "^0.10.26",
     "yar": "~3.0.3"
   },
   "devDependencies": {

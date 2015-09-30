@@ -5,9 +5,9 @@
  */
 exports.index = function (request, reply) {
 
-	var user = request.auth.credentials;
-	reply.view('index', {
-		user: user || null,
-		request: request
-	});
+  var user = request.auth.credentials;
+  reply.view('index', {
+    user: user || null,
+    request: request
+  });
 };

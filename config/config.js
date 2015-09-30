@@ -3,9 +3,9 @@
 /**
  * Module dependencies.
  */
-var _ 		= require('lodash'),
-		glob 	= require('glob'),
-		fs 		= require('fs');
+var _      = require('lodash'),
+    glob   = require('glob'),
+    fs     = require('fs');
 
 /**
  * Resolve environment configuration by extending each env configuration file,
@@ -14,14 +14,14 @@ var _ 		= require('lodash'),
  */
 var resolvingConfig = function () {
 
-	var conf = {};
+  var conf = {};
 
-	conf = _.extend(
-		require('./env/all'),
-		require('./env/' + process.env.NODE_ENV) || {}
-	);
+  conf = _.extend(
+    require('./env/all'),
+    require('./env/' + process.env.NODE_ENV) || {}
+  );
 
-	return _.merge(conf, (fs.existsSync('./config/env/local.js') && require('./env/local.js')) || {});
+  return _.merge(conf, (fs.existsSync('./config/env/local.js') && require('./env/local.js')) || {});
 };
 
 /**
@@ -34,38 +34,38 @@ module.exports = resolvingConfig();
  */
 module.exports.getGlobbedFiles = function (globPatterns, removeRoot) {
 
-	// For context switching
-	var _this = this;
+  // For context switching
+  var _this = this;
 
-	// URL paths regex
-	var urlRegex = new RegExp('^(?:[a-z]+:)?\/\/', 'i');
+  // URL paths regex
+  var urlRegex = new RegExp('^(?:[a-z]+:)?\/\/', 'i');
 
-	// The output array
-	var output = [];
+  // The output array
+  var output = [];
 
-	// If glob pattern is array so we use each pattern in a recursive way, otherwise we use glob
-	if (_.isArray(globPatterns)) {
-		globPatterns.forEach(function (globPattern) {
-			output = _.union(output, _this.getGlobbedFiles(globPattern, removeRoot));
-		});
-	} else if (_.isString(globPatterns)) {
-		if (urlRegex.test(globPatterns)) {
-			output.push(globPatterns);
-		} else {
-			var files = glob(globPatterns, {
-				sync: true
-			});
-			if (removeRoot) {
-				files = files.map(function (file) {
-					return file.replace(removeRoot, '');
-				});
-			}
+  // If glob pattern is array so we use each pattern in a recursive way, otherwise we use glob
+  if (_.isArray(globPatterns)) {
+    globPatterns.forEach(function (globPattern) {
+      output = _.union(output, _this.getGlobbedFiles(globPattern, removeRoot));
+    });
+  } else if (_.isString(globPatterns)) {
+    if (urlRegex.test(globPatterns)) {
+      output.push(globPatterns);
+    } else {
+      var files = glob(globPatterns, {
+        sync: true
+      });
+      if (removeRoot) {
+        files = files.map(function (file) {
+          return file.replace(removeRoot, '');
+        });
+      }
 
-			output = _.union(output, files);
-		}
-	}
+      output = _.union(output, files);
+    }
+  }
 
-	return output;
+  return output;
 };
 
 /**
@@ -73,14 +73,14 @@ module.exports.getGlobbedFiles = function (globPatterns, removeRoot) {
  */
 module.exports.getJavaScriptAssets = function (includeTests) {
 
-	var output = this.getGlobbedFiles(this.assets.lib.js.concat(this.assets.js), 'public/');
+  var output = this.getGlobbedFiles(this.assets.lib.js.concat(this.assets.js), 'public/');
 
-	// To include tests
-	if (includeTests) {
-		output = _.union(output, this.getGlobbedFiles(this.assets.tests));
-	}
+  // To include tests
+  if (includeTests) {
+    output = _.union(output, this.getGlobbedFiles(this.assets.tests));
+  }
 
-	return output;
+  return output;
 };
 
 /**
@@ -88,6 +88,6 @@ module.exports.getJavaScriptAssets = function (includeTests) {
  */
 module.exports.getCSSAssets = function () {
 
-	var output = this.getGlobbedFiles(this.assets.lib.css.concat(this.assets.css), 'public/');
-	return output;
+  var output = this.getGlobbedFiles(this.assets.lib.css.concat(this.assets.css), 'public/');
+  return output;
 };

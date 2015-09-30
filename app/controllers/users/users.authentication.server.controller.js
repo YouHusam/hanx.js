@@ -3,41 +3,40 @@
 /**
  * Module dependencies.
  */
-var _ 						= require('lodash'),
-		Boom 					= require('boom'),
-		Errorhandler 	= require('../errors.server.controller'),
-		Mongoose 			= require('mongoose'),
-		User 					= Mongoose.model('User');
+var _              = require('lodash'),
+    Boom           = require('boom'),
+    ErrorHandler   = require('../errors.server.controller');
 
 /**
  * Signup
  */
 exports.signup = function (request, reply) {
 
-	// For security measurement we remove the roles from the request.body object
-	delete request.payload.roles;
+  var User = request.collections.user;
+  // For security measurement we remove the roles from the request.body object
+  delete request.payload.roles;
 
-	// Init Variables
-	var user = new User(request.payload);
-	var message = null;
+  // Init Variables
+  var user = request.payload;
 
-	// Add missing user fields
-	user.provider = 'local';
-	user.displayName = user.firstName + ' ' + user.lastName;
+  // Add missing user fields
+  user.provider = 'local';
+  user.displayName = user.firstName + ' ' + user.lastName;
 
-	// Then save the user
-	user.save(function (err) {
-		if (err) {
-			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-		} else {
-			// Remove sensitive data before login
-			delete user.password;
-			delete user.salt;
+  // Then save the user
+  User.create(user, function (err) {
 
-			request.session.set(request.server.app.sessionName, user);
-			reply(user);
-		}
-	});
+    if (err) {
+      return reply(Boom.badRequest(ErrorHandler.getErrorMessage(err)));
+    } else {
+      // Remove sensitive data before login
+      delete user.password;
+      delete user.salt;
+
+      request.session.set(request.server.app.sessionName, user);
+      reply(user);
+    }
+  });
 };
 
 /**
@@ -45,20 +44,27 @@ exports.signup = function (request, reply) {
  */
 var cleanUser = function (user) {
 
-	// Copy user and remove sensetive and useless data
-	var cleanedUser = {};
-	cleanedUser._id = user._id.toString();
-	cleanedUser.id = user._id;
-	cleanedUser.displayName = user.displayName;
-	cleanedUser.provider = user.provider;
-	cleanedUser.username = user.username;
-	cleanedUser.created = user.created;
-	cleanedUser.roles = user.roles;
-	cleanedUser.email = user.email;
-	cleanedUser.lastName = user.lastName;
-	cleanedUser.firstName = user.firstName;
+  // Copy user and remove sensitive and useless data
+  var cleanedUser = {};
+  cleanedUser.id = user.id;
+  cleanedUser.displayName = user.displayName;
+  cleanedUser.provider = user.provider;
+  cleanedUser.username = user.username;
+  cleanedUser.createdAt = user.createdAt;
+  cleanedUser.roles = user.roles;
+  cleanedUser.email = user.email;
+  cleanedUser.lastName = user.lastName;
+  cleanedUser.firstName = user.firstName;
+  if (user.additionalProvidersData) {
+    cleanedUser.additionalProvidersData = user.additionalProvidersData;
+    for (var provider in cleanedUser.additionalProvidersData) {
+      delete cleanedUser.additionalProvidersData[provider].accessToken;
+    }
+  }
+  if (cleanedUser.providerData)
+    delete cleanedUser.providerData.accessToken;
 
-	return cleanedUser;
+  return cleanedUser;
 };
 
 exports.cleanUser = cleanUser;
@@ -68,38 +74,40 @@ exports.cleanUser = cleanUser;
  */
 exports.signin = function (request, reply) {
 
-	if (!request.auth.isAuthenticated) {
+  var User = request.collections.user;
 
-		var username = request.payload.username;
-		var password = request.payload.password;
-		if (!username || !password) {
-			return reply(Boom.unauthorized('Username and password should not be blank'));
-		}
+  if (!request.auth.isAuthenticated) {
 
-		User.findOne({
-			username: username
-		}, function (err, user) {
+    var username = request.payload.username;
+    var password = request.payload.password;
+    if (!username || !password) {
+      return reply(Boom.unauthorized('Username and password should not be blank'));
+    }
 
-			if (err) {
-				return reply(Boom.unauthorized(err));
-			}
-			if (!user) {
-				return reply(Boom.unauthorized('Username or password are wrong'));
-			}
-			if (!user.authenticate(password)) {
-				return reply(Boom.unauthorized('Username or password are wrong'));
-			}
+    User.findOne({
+      username: username
+    }, function (err, user) {
 
-			var authedUser = cleanUser(user);
-			if(authedUser !== {}){
-				request.session.set(request.server.app.sessionName, authedUser);
-				return reply(authedUser);
-			}
-		});
-	} else {
-		var user = request.auth.credentials;
-		return reply.redirect('/', user);
-	}
+      if (err) {
+        return reply(Boom.unauthorized(err));
+      }
+      if (!user) {
+        return reply(Boom.unauthorized('Username or password are wrong'));
+      }
+      if (!user.authenticate(password)) {
+        return reply(Boom.unauthorized('Username or password are wrong'));
+      }
+
+      var authedUser = cleanUser(user);
+      if(authedUser !== {}){
+        request.session.set(request.server.app.sessionName, authedUser);
+        return reply(authedUser);
+      }
+    });
+  } else {
+    var user = request.auth.credentials;
+    return reply.redirect('/', user);
+  }
 };
 
 /**
@@ -107,8 +115,8 @@ exports.signin = function (request, reply) {
  */
 exports.signout = function (request, reply) {
 
-	request.session.clear(request.server.app.sessionName);
-	reply.redirect('/');
+  request.session.clear(request.server.app.sessionName);
+  reply.redirect('/');
 };
 
 /**
@@ -116,11 +124,11 @@ exports.signout = function (request, reply) {
  */
 exports.oauthCallback = function (request, reply) {
 
-	if (!request.auth.isAuthenticated) {
-		return reply.redirect('/#!/signin');
-	}
-	request.session.set(request.server.app.sessionName, request.pre.user);
-	return reply.redirect('/');
+  if (!request.auth.isAuthenticated) {
+    return reply.redirect('/#!/signin');
+  }
+  request.session.set(request.server.app.sessionName, request.pre.user);
+  return reply.redirect('/');
 };
 
 /**
@@ -128,117 +136,110 @@ exports.oauthCallback = function (request, reply) {
  */
 exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
-	if (request.auth.isAuthenticated) {
-		// Define a search query fields
-		var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
-		var searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;
+  var User = request.collections.user;
 
-		// Define main provider search query
-		var mainProviderSearchQuery = {};
-		mainProviderSearchQuery.provider = providerUserProfile.provider;
-		mainProviderSearchQuery[searchMainProviderIdentifierField] = providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
+  if (!request.session.get(request.server.app.sessionName) &&
+      request.auth.isAuthenticated) {
 
-		// Define additional provider search query
-		var additionalProviderSearchQuery = {};
-		additionalProviderSearchQuery[searchAdditionalProviderIdentifierField] = providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
+    // Define a search query to find existing user with current provider profile
+    var query = 'SELECT * FROM "user" WHERE ('+
+      '"provider" = \'' + providerUserProfile.provider + '\' AND '+
+      '"providerData"->>\'' + providerUserProfile.providerIdentifierField + '\' = \'' +
+      providerUserProfile.providerData[providerUserProfile.providerIdentifierField] +
+      '\') OR ("additionalProvidersData"#>>\'{' + providerUserProfile.provider + ',' +
+      providerUserProfile.providerIdentifierField + '}\' = \''+
+      providerUserProfile.providerData[providerUserProfile.providerIdentifierField]+
+      '\') LIMIT 1;';
 
-		// Define a search query to find existing user with current provider profile
-		var searchQuery = {
-			$or: [mainProviderSearchQuery, additionalProviderSearchQuery]
-		};
+    User.query(query, function (err, results) {
 
-		User.findOne(searchQuery, function (err, user) {
+      if (err) {
+        return done(err);
+      } else {
+        if (!results.rows[0]) {
+          var possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
 
-			if (err) {
-				return done(err);
-			} else {
-				if (!user) {
-					var possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
+          User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
 
-					User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
+            var user = {
+              firstName: providerUserProfile.firstName,
+              lastName: providerUserProfile.lastName,
+              username: availableUsername,
+              displayName: providerUserProfile.displayName,
+              email: providerUserProfile.email,
+              provider: providerUserProfile.provider,
+              providerData: providerUserProfile.providerData
+            };
 
-						user = new User({
-							firstName: providerUserProfile.firstName,
-							lastName: providerUserProfile.lastName,
-							username: availableUsername,
-							displayName: providerUserProfile.displayName,
-							email: providerUserProfile.email,
-							provider: providerUserProfile.provider,
-							providerData: providerUserProfile.providerData
-						});
+            // And save the user
+            User.create(user, function (err) {
 
-						// And save the user
-						user.save(function (err) {
+              return done(err, user);
+            });
+          });
+        } else {
 
-							return done(err, user);
-						});
-					});
-				} else {
+          // Remove unwanted data from user
+          var authedUser = cleanUser(results.rows[0]);
 
-					// Remove unwanted data from user
-					var authedUser = cleanUser(user);
+          return done(err, authedUser);
+        }
+      }
+    });
+  } else {
+    // User is already logged in, join the provider data to the existing user
+    var AuthUser = request.session.get(request.server.app.sessionName);
+    User.findOne({id: AuthUser.id}, function (err, user) {
 
-					return done(err, authedUser);
-				}
-			}
-		});
-	} else {
-		// User is already logged in, join the provider data to the existing user
-		var user = request.auth.credentials;
-		User.findOne({id: request.auth.credentials.id}, function (err, user) {
+      // Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
+      if (user.provider !== providerUserProfile.provider &&
+        (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
+        // Add the provider data to the additional provider data field
+        if (!user.additionalProvidersData) user.additionalProvidersData = {};
+        user.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
 
-			// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
-			if (user.provider !== providerUserProfile.provider &&
-				(!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
-				// Add the provider data to the additional provider data field
-				if (!user.additionalProvidersData) user.additionalProvidersData = {};
-				user.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
+        // And save the user
+        User.update(AuthUser, user, function (err) {
 
-				// Then tell mongoose that we've updated the additionalProvidersData field
-				user.markModified('additionalProvidersData');
+          return done(err, user, '/#!/settings/accounts');
+        });
+      } else {
+        return done(user);
+      }
+    });
 
-				// And save the user
-				user.save(function (err) {
-
-					return done(err, user, '/#!/settings/accounts');
-				});
-			} else {
-				return done(user);
-			}
-		});
-
-	}
+  }
 };
 
 /**
  * Remove OAuth provider
  */
-exports.removeOAuthProvider = function (request, reply, next) {
+exports.removeOAuthProvider = function (request, reply) {
 
-	var user = request.session.get(request.server.app.sessionName);
-	var provider = request.params.provider;
+  var User = request.collections.user;
 
-	if (user && provider) {
-		// Delete the additional provider
-		if (user.additionalProvidersData[provider]) {
-			delete user.additionalProvidersData[provider];
+  var user = request.session.get(request.server.app.sessionName);
+  var provider = request.query.provider;
 
-			// Then tell mongoose that we've updated the additionalProvidersData field
-			user.markModified('additionalProvidersData');
-		}
+  if (user && provider) {
+    // Delete the additional provider
+    if (user.additionalProvidersData[provider]) {
+      delete user.additionalProvidersData[provider];
+    }
 
-		user.save(function (err) {
-			if (err) {
-				return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-			} else {
-				request.login(user, function (err) {
-					if (err) {
-						reply(Boom.badRequest(err));
-					} else {
-						reply(user);
-					}
-				});
-			}
-		});
-	}
+    User.update(request.auth.credentials.id, user)
+      .exec(function (err, user) {
+
+        if (err) {
+          return reply(Boom.badRequest(ErrorHandler.getErrorMessage(err)));
+        } else {
+          var authedUser = cleanUser(user[0]);
+
+          request.session.set(request.server.app.sessionName, authedUser);
+          return reply(authedUser);
+        }
+    });
+  } else {
+    return reply(Boom.badRequest('Invalid provider'));
+  }
 };

@@ -3,27 +3,27 @@
 /**
  * Module dependencies.
  */
-var mongoose = require('mongoose'),
-	Errorhandler = require('./errors.server.controller'),
-	Article = mongoose.model('Article'),
-	Boom = require('boom'),
-	_ = require('lodash');
+var Errorhandler   = require('./errors.server.controller'),
+    Boom           = require('boom'),
+    _              = require('lodash');
 
 /**
  * Create a article
  */
 exports.create = function (request, reply) {
 
-	var article = new Article(request.payload);
-	article.user = request.auth.credentials;
+  var Article = request.collections.article;
+  var article = request.payload;
+  article.user = request.auth.credentials.id;
 
-	article.save(function (err) {
-		if (err) {
-			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-		} else {
-			reply(article);
-		}
-	});
+  Article.create(article, function (err, article) {
+
+    if (err) {
+      return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+    } else {
+      reply(article);
+    }
+  });
 };
 
 /**
@@ -31,7 +31,7 @@ exports.create = function (request, reply) {
  */
 exports.read = function (request, reply) {
 
-	reply(request.pre.article);
+  reply(request.pre.article);
 };
 
 /**
@@ -39,22 +39,24 @@ exports.read = function (request, reply) {
  */
 exports.update = function (request, reply) {
 
-	var article = Article.findOne(request.pre.article, function (err, article) {
+  var Article = request.collections.article;
+  Article.update({id: request.pre.article.id}, request.payload,
+    function (err, article) {
 
-		if(article){
-			article = _.extend(article, request.payload);
-			article.save(function (err) {
+      if (err) {
+        return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+      } else {
+        Article.findOne(article).populate('user')
+          .exec(function (err, article) {
 
-				if (err) {
-					return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-				} else {
-					reply(article);
-				}
-			});
-		}	else {
-			reply(Boom.badRequest('Article not found'));
-		}
-	});
+            if (err) return reply(err);
+            if (!article) {
+              return reply(Boom.notFound('Article not found'));
+            }
+            reply(article);
+          });
+      }
+  });
 };
 
 /**
@@ -62,16 +64,16 @@ exports.update = function (request, reply) {
  */
 exports.delete = function (request, reply) {
 
-	var article = new Article(request.pre.article);
+  var Article = request.collections.article;
+  var article = request.pre.article;
+  Article.destroy({id: article.id}, function (err) {
 
-	article.remove(function (err) {
-
-		if (err) {
-			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-		} else {
-			reply(article);
-		}
-	});
+    if (err) {
+      return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+    } else {
+      reply(article);
+    }
+  });
 };
 
 /**
@@ -79,14 +81,17 @@ exports.delete = function (request, reply) {
  */
 exports.list = function (request, reply) {
 
-	Article.find().sort('-created').populate('user', 'displayName').exec(function (err, articles) {
+  var Article = request.collections.article;
 
-		if (err) {
-			return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
-		} else {
-			reply(articles);
-		}
-	});
+  Article.find({}).sort({createdAt: 'desc'}).populate('user')
+    .exec(function (err, articles) {
+
+      if (err) {
+        return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
+      } else {
+        reply(articles);
+      }
+  });
 };
 
 /**
@@ -94,19 +99,17 @@ exports.list = function (request, reply) {
  */
 exports.articleByID = function (request, reply) {
 
-	var id = request.params.articleId;
-	if (!mongoose.Types.ObjectId.isValid(id)) {
-		return reply(Boom.badRequest('Article is invalid'));
-	}
+  var Article = request.collections.article;
+  var id = request.params.articleId;
 
-	Article.findById(id).populate('user', 'displayName').exec(function (err, article) {
+  Article.findOne({id: id}).populate('user').exec(function (err, article) {
 
-		if (err) return reply(err);
-		if (!article) {
-			return reply(Boom.notfound('Article not found'));
-		}
-		reply(article);
-	});
+    if (err) return reply(err);
+    if (!article) {
+      return reply(Boom.notFound('Article not found'));
+    }
+    reply(article);
+  });
 };
 
 /**
@@ -114,9 +117,9 @@ exports.articleByID = function (request, reply) {
  */
 exports.hasAuthorization = function (request, reply) {
 
-	if (request.pre.article.user.id.toString() !==
-			request.auth.credentials._id.toString()) {
-		return reply(Boom.forbidden('User is not authorized'));
-	}
-	reply();
+  if (request.pre.article.user.id.toString() !==
+      request.auth.credentials.id.toString()) {
+    return reply(Boom.forbidden('User is not authorized'));
+  }
+  reply();
 };

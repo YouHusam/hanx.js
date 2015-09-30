@@ -3,32 +3,39 @@
 /**
  * Module dependencies.
  */
-var mongoose = require('mongoose'),
-	Schema = mongoose.Schema;
+var Uuid = require('node-uuid');
 
 /**
  * Article Schema
  */
-var ArticleSchema = new Schema({
-	created: {
-		type: Date,
-		default: Date.now
-	},
-	title: {
-		type: String,
-		default: '',
-		trim: true,
-		required: 'Title cannot be blank'
-	},
-	content: {
-		type: String,
-		default: '',
-		trim: true
-	},
-	user: {
-		type: Schema.ObjectId,
-		ref: 'User'
-	}
-});
+var Article = {
+  identity: 'article',
+  connection: 'postgreDefault',
+  autoPK: false,
+  autoCreatedAt: true,
+  attributes: {
+    id: {
+      type: 'text',
+      primaryKey: true,
+      unique: true,
+      required: true,
+      defaultsTo: function () {
+        return Uuid.v4();
+      }
+    },
+    title: {
+      type: 'string',
+      defaultsTo: '',
+      required: true
+    },
+    content: {
+      type: 'text',
+      defaultsTo: ''
+    },
+    user: {
+      model: 'user'
+    }
+  }
+};
 
-mongoose.model('Article', ArticleSchema);
+module.exports = Article;
