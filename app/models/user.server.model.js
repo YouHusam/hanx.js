@@ -161,11 +161,13 @@ var User = {
   beforeUpdate: function (values, next) {
 
     // Update password if new password is provided
-    if (values.password && values.password.length > 6) {
-      values.salt = crypto.randomBytes(16).toString('base64');
-      values.password = this.hashPassword(values.password, values.salt);
+    if (values.hasNewPassword) {
+      if (values.password && values.password.length > 6) {
+        values.salt = crypto.randomBytes(16).toString('base64');
+        values.password = this.hashPassword(values.password, values.salt);
+      }
+      delete values.hasNewPassword;
     }
-
     // Update given name if new first or last name is provided
     if (values.firstName || values.lastName) {
       values.displayName = values.firstName + ' ' + values.lastName;

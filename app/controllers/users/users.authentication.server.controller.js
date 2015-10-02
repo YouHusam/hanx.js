@@ -172,8 +172,9 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
             };
 
             // And save the user
-            User.create(user, function (err) {
+            User.create(user, function (err, user) {
 
+              user = cleanUser(user);
               return done(err, user);
             });
           });
@@ -195,15 +196,17 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
       if (user.provider !== providerUserProfile.provider &&
         (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
         // Add the provider data to the additional provider data field
-        if (!user.additionalProvidersData) user.additionalProvidersData = {};
-        user.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
+        if (!user.additionalProvidersData) AuthUser.additionalProvidersData = {};
+        AuthUser.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
 
         // And save the user
-        User.update({id: AuthUser.id}, user, function (err) {
+        User.update({id: user.id}, AuthUser, function (err, user) {
 
+          user = cleanUser(user[0]);
           return done(err, user, '/#!/settings/accounts');
         });
       } else {
+        user = cleanUser(user);
         return done(user);
       }
     });
@@ -227,7 +230,7 @@ exports.removeOAuthProvider = function (request, reply) {
       delete user.additionalProvidersData[provider];
     }
 
-    User.update(request.auth.credentials.id, user)
+    User.update({id: user.id}, user)
       .exec(function (err, user) {
 
         if (err) {

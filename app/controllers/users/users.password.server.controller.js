@@ -43,14 +43,13 @@ exports.forgot = function (request, reply, next) {
           } else if (user.provider !== 'local') {
             return reply(Boom.badRequest('It seems like you signed up using your ' + user.provider + ' account'));
           } else {
-            delete user.password;
-            delete user.salt;
-            user.resetPasswordToken = token;
-
             var passwordExpiresAt = new Date(Date.now() + 3600000); // 1 hour
-            user.resetPasswordExpires = passwordExpiresAt.toISOString();
+            var newUser = {
+              resetPasswordToken: token,
+              resetPasswordExpires: passwordExpiresAt.toISOString()
+            };
 
-            User.update({username: user.username}, user, function (err, updatedUser) {
+            User.update({username: user.username}, newUser, function (err, updatedUser) {
               done(err, token, user);
             });
           }
@@ -145,7 +144,8 @@ exports.reset = function (request, reply) {
             var newUser = {
               password: passwordDetails.newPassword,
               resetPasswordToken: undefined,
-              resetPasswordExpires: undefined
+              resetPasswordExpires: undefined,
+              hasNewPassword: true
             };
 
             User.update({username: user.username}, newUser, function (err) {
@@ -222,6 +222,7 @@ exports.changePassword = function (request, reply) {
           if (user.authenticate(passwordDetails.currentPassword)) {
             if (passwordDetails.newPassword === passwordDetails.verifyPassword) {
               user.password = passwordDetails.newPassword;
+              user.hasNewPassword = true;
 
               User.update({id: user.id}, {password: user.password}).exec(function (err, user) {
 

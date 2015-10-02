@@ -123,11 +123,11 @@ describe('Article CRUD tests', function () {
 
       // Invalidate title field
       article.title = '';
-
       // Save a new article
       Server.inject({
         method: 'POST',
         url: '/articles',
+        payload: article,
         credentials: user
       }, function (response) {
 

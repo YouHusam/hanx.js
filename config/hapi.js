@@ -68,6 +68,8 @@ module.exports = function () {
 
   var plugins = [
     { register: require('bell') },
+    { register: require('inert') },
+    { register: require('vision') },
     {
       register: Dogwater,
       options: {
@@ -117,37 +119,37 @@ module.exports = function () {
     if (err) {
       console.error(err);
     }
-    server.emit('pluginsLoaded');
-  });
 
-  // Set swig as the template engine and views path
-  server.views({
-    engines: {
-      'server.view.html': require('swig')
-    },
-    path: './app/views',
-    isCached: process.env.NODE_ENV !== 'development',
-    context: {
-      title: Config.app.title,
-      description: Config.app.description,
-      keywords: Config.app.keywords,
-      facebookAppId: Config.facebook.clientID,
-      jsFiles: Config.getJavaScriptAssets(),
-      cssFiles: Config.getCSSAssets()
-    }
-  });
-
-  // Setting the app router and static folder
-  server.route({
-    method: 'GET',
-    path: '/{path*}',
-    handler: {
-       directory: {
-        path: Path.resolve('./public'),
-        listing: false,
-        index: true
+    // Set swig as the template engine and views path
+    server.views({
+      engines: {
+        'server.view.html': require('swig')
+      },
+      path: './app/views',
+      isCached: process.env.NODE_ENV !== 'development',
+      context: {
+        title: Config.app.title,
+        description: Config.app.description,
+        keywords: Config.app.keywords,
+        facebookAppId: Config.facebook.clientID,
+        jsFiles: Config.getJavaScriptAssets(),
+        cssFiles: Config.getCSSAssets()
       }
-    }
+    });
+
+    // Setting the app router and static folder
+    server.route({
+      method: 'GET',
+      path: '/{path*}',
+      handler: {
+        directory: {
+          path: Path.resolve('./public'),
+          listing: false,
+          index: true
+        }
+      }
+    });
+    server.emit('pluginsLoaded');
   });
 
   // Setup the authentication strategies
