@@ -1,7 +1,11 @@
 language: node_js
 node_js:
-  - "0.12"
+  - "4.1"
 env:
-  - NODE_ENV=travis
+  - NODE_ENV=test
 services:
   - mongodb
+addons:
+  postgresql: "9.3"
+before_script:
+  - psql -c 'create database test;' -U postgres
