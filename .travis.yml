@@ -2,10 +2,27 @@ language: node_js
 node_js:
   - "4.1"
 env:
-  - NODE_ENV=test
+  - NODE_ENV=travis CC=gcc-4.9 CXX=g++-4.9
 services:
   - mongodb
 addons:
-  postgresql: "9.3"
+  postgresql: "9.4"
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-4.9
+      - g++-4.9
+      - zlib1g-dev
+      - libbz2-dev
+before_install:
+  - npm install -g npm@'>=3.3.6'
+  - npm install -g node-gyp
+  - npm install -g grunt
+  - npm install -g bower
+  - npm install -g grunt-cli
+  - npm install -g acorn
 before_script:
+  - psql -c 'CREATE ROLE hanx WITH PASSWORD password LOGIN;' -U postgres
   - psql -c 'create database test;' -U postgres
+  - psql -c 'GRANT postgres TO hanx;' -U postgres
