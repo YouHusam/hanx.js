@@ -3,11 +3,11 @@
   "description": "Full-Stack JavaScript with PostgreSQL, hapi, AngularJS, and Node.js.",
   "version": "0.0.1",
   "private": false,
-  "author": "https://bitbucket.org/youhusam/",
+  "author": "https://github.org/youhusam/",
   "license": "SEE LICENSE IN license.md",
   "repository": {
     "type": "git",
-    "url": "https://bitbucket.org/youhusam/hanx.js"
+    "url": "https://github.org/youhusam/hanx.js"
   },
   "engines": {
     "node": ">=4.1.1",

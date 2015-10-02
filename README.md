@@ -28,14 +28,14 @@ There are several ways you can get the HANX.JS boilerplate:
 ### Cloning The GitHub Repository
 You can also use Git to directly clone the HANX.JS repository:
 ```bash
-$ git clone https://youhusam@bitbucket.org/youhusam/hanxjs.git
+$ git clone https://youhusam@github.org/youhusam/hanxjs.git
 ```
 This will clone the latest version of the HANX.JS repository to a **hanxjs** folder.
 
 ### Downloading The Repository Zip File
-Another way to use the HANX.JS boilerplate is to download a zip copy from the [master branch on BitBucket](https://bitbucket.org/youhusam/hanxjs/get/master.zip). You can also do this using `wget` command:
+Another way to use the HANX.JS boilerplate is to download a zip copy from the [master branch on Github](https://github.org/youhusam/hanxjs/get/master.zip). You can also do this using `wget` command:
 ```bash
-$ wget https://bitbucket.org/youhusam/hanxjs/get/master.zip -O hanx.zip; unzip hanx.zip; rm hanx.zip
+$ wget https://github.org/youhusam/hanxjs/get/master.zip -O hanx.zip; unzip hanx.zip; rm hanx.zip
 ```
 Don't forget to rename **hanx-master** after your project name.
 
