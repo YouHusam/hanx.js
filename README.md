@@ -1,5 +1,8 @@
 ![HANX.JS Logo](https://bytebucket.org/youhusam/hanxjs/raw/1eb2adf1abe8db760e5ec48f52c335b49d92792a/public/modules/core/img/brand/logo.png)
 
+[![Build Status](https://travis-ci.org/YouHusam/hanx.js.svg?branch=master)](https://travis-ci.org/YouHusam/hanx.js)
+[![Dependencies Status](https://david-dm.org/YouHusam/hanx.js)](https://david-dm.org/YouHusam/hanx.js)
+
 HANX.JS is a port of [MEAN.JS](http://meanjs.org) in [Hapi.JS](http://www.hapijs.com/)
 
 Please note that this is still a work in progress.
@@ -22,20 +25,29 @@ $ npm install -g bower
 $ npm install -g grunt-cli
 ```
 
+* Setup the database:
+
+```bash
+$ psql
+=# CREATE ROLE hanx WITH PASSWORD 'password' LOGIN;
+=# CREATE DATABASE development;
+=# GRANT postgres TO hanx;
+```
+
 ## Downloading MEAN.JS
 There are several ways you can get the HANX.JS boilerplate:
 
 ### Cloning The GitHub Repository
 You can also use Git to directly clone the HANX.JS repository:
 ```bash
-$ git clone https://youhusam@github.org/youhusam/hanxjs.git
+$ git clonehttps://github.com/YouHusam/hanx.js.git
 ```
 This will clone the latest version of the HANX.JS repository to a **hanxjs** folder.
 
 ### Downloading The Repository Zip File
 Another way to use the HANX.JS boilerplate is to download a zip copy from the [master branch on Github](https://github.org/youhusam/hanxjs/get/master.zip). You can also do this using `wget` command:
 ```bash
-$ wget https://github.org/youhusam/hanxjs/get/master.zip -O hanx.zip; unzip hanx.zip; rm hanx.zip
+$ wget https://github.com/YouHusam/hanx.js/archive/master.zip -O hanx.zip; unzip hanx.zip; rm hanx.zip
 ```
 Don't forget to rename **hanx-master** after your project name.
 

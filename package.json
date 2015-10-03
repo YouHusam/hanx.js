@@ -1,13 +1,13 @@
 {
   "name": "hankjs",
   "description": "Full-Stack JavaScript with PostgreSQL, hapi, AngularJS, and Node.js.",
-  "version": "0.0.1",
+  "version": "0.8.1",
   "private": false,
   "author": "https://github.org/youhusam/",
   "license": "SEE LICENSE IN license.md",
   "repository": {
     "type": "git",
-    "url": "https://github.org/youhusam/hanx.js"
+    "url": "https://github.com/YouHusam/hanx.js"
   },
   "engines": {
     "node": ">=4.1.1",
