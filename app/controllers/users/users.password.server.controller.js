@@ -3,13 +3,11 @@
 /**
  * Module dependencies.
  */
-var _              = require('lodash'),
-    Boom           = require('boom'),
+var Boom           = require('boom'),
     Errorhandler   = require('../errors.server.controller'),
     Config         = require('../../../config/config'),
     Nodemailer     = require('nodemailer'),
     Async          = require('async'),
-    cleanUser      = require('./users.authentication.server.controller.js').cleanUser,
     Crypto         = require('crypto');
 
 var smtpTransport = Nodemailer.createTransport(Config.mailer.options);
@@ -157,11 +155,11 @@ exports.reset = function (request, reply) {
                 request.session.clear(request.server.app.sessionName);
 
                 // Copy user and remove sensetive and useless data
-                var authedUser = cleanUser(user);
-                if(authedUser !== {}){
+                user = user.toJSON();
+                if(user !== {}){
                   // Create a new session to login the user
-                  request.session.set(request.server.app.sessionName, authedUser);
-                  reply(authedUser);
+                  request.session.set(request.server.app.sessionName, user);
+                  reply(user);
                 }
               }
             });
@@ -224,7 +222,7 @@ exports.changePassword = function (request, reply) {
               user.password = passwordDetails.newPassword;
               user.hasNewPassword = true;
 
-              User.update({id: user.id}, {password: user.password}).exec(function (err, user) {
+              User.update({id: user.id}, user).exec(function (err, user) {
 
                 if (err) {
                   return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
@@ -234,11 +232,12 @@ exports.changePassword = function (request, reply) {
                   // Clear session
                   request.session.clear(request.server.app.sessionName);
 
-                  // Copy user and remove sensetive and useless data
-                  var authedUser = cleanUser(user[0]);
-                  if(authedUser !== {}){
+                  // Copy user and remove sensitive and useless data
+                  user = user[0].toJSON();
+
+                  if(user !== {}){
                     // Create a new session to login the user
-                    request.session.set(request.server.app.sessionName, authedUser);
+                    request.session.set(request.server.app.sessionName, user);
                     reply({
                       message: 'Password changed successfully'
                     });

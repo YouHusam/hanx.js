@@ -3,8 +3,7 @@
 /**
  * Module dependencies.
  */
-var _              = require('lodash'),
-    Boom           = require('boom'),
+var Boom           = require('boom'),
     Errorhandler   = require('../errors.server.controller.js');
 
 /**
@@ -26,11 +25,9 @@ exports.update = function (request, reply) {
       return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 
     } else {
-      var authedUser = require('./users.authentication.server.controller.js')
-          .cleanUser(user[0]);
-
-      request.session.set(request.server.app.sessionName, authedUser);
-      return reply(authedUser);
+      user = user.toJSON();
+      request.session.set(request.server.app.sessionName, user);
+      return reply(user);
     }
   });
 };
@@ -42,7 +39,6 @@ exports.me = function (request, reply) {
 
   var user = request.auth.credentials;
     reply({
-      user:
-        require('./users.authentication.server.controller.js').cleanUser(user)
+      user: user.toJSON()
     });
 };

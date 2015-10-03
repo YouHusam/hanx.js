@@ -3,8 +3,7 @@
 /**
  * Module dependencies.
  */
-var _              = require('lodash'),
-    Boom           = require('boom'),
+var Boom           = require('boom'),
     ErrorHandler   = require('../errors.server.controller');
 
 /**
@@ -29,45 +28,14 @@ exports.signup = function (request, reply) {
     if (err) {
       return reply(Boom.badRequest(ErrorHandler.getErrorMessage(err)));
     } else {
-      // Remove sensitive data before login
-      delete user.password;
-      delete user.salt;
 
+      user = user.toJSON();
       request.session.set(request.server.app.sessionName, user);
       reply(user);
     }
   });
 };
 
-/**
- * Clean useless data from the user object
- */
-var cleanUser = function (user) {
-
-  // Copy user and remove sensitive and useless data
-  var cleanedUser = {};
-  cleanedUser.id = user.id;
-  cleanedUser.displayName = user.displayName;
-  cleanedUser.provider = user.provider;
-  cleanedUser.username = user.username;
-  cleanedUser.createdAt = user.createdAt;
-  cleanedUser.roles = user.roles;
-  cleanedUser.email = user.email;
-  cleanedUser.lastName = user.lastName;
-  cleanedUser.firstName = user.firstName;
-  if (user.additionalProvidersData) {
-    cleanedUser.additionalProvidersData = user.additionalProvidersData;
-    for (var provider in cleanedUser.additionalProvidersData) {
-      delete cleanedUser.additionalProvidersData[provider].accessToken;
-    }
-  }
-  if (cleanedUser.providerData)
-    delete cleanedUser.providerData.accessToken;
-
-  return cleanedUser;
-};
-
-exports.cleanUser = cleanUser;
 
 /**
  * Local Signin
@@ -98,10 +66,10 @@ exports.signin = function (request, reply) {
         return reply(Boom.unauthorized('Username or password are wrong'));
       }
 
-      var authedUser = cleanUser(user);
-      if(authedUser !== {}){
-        request.session.set(request.server.app.sessionName, authedUser);
-        return reply(authedUser);
+      if(user !== {}){
+        user = user.toJSON();
+        request.session.set(request.server.app.sessionName, user);
+        return reply(user);
       }
     });
   } else {
@@ -173,17 +141,15 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
             // And save the user
             User.create(user, function (err, user) {
-
-              user = cleanUser(user);
+              user = user.toJSON();
               return done(err, user);
             });
           });
         } else {
 
           // Remove unwanted data from user
-          var authedUser = cleanUser(results.rows[0]);
-
-          return done(err, authedUser);
+          var user = results.rows[0].toJSON();
+          return done(err, user);
         }
       }
     });
@@ -202,11 +168,11 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
         // And save the user
         User.update({id: user.id}, AuthUser, function (err, user) {
 
-          user = cleanUser(user[0]);
+          user = user.toJSON();
           return done(err, user, '/#!/settings/accounts');
         });
       } else {
-        user = cleanUser(user);
+        user = user.toJSON();
         return done(user);
       }
     });
@@ -236,10 +202,10 @@ exports.removeOAuthProvider = function (request, reply) {
         if (err) {
           return reply(Boom.badRequest(ErrorHandler.getErrorMessage(err)));
         } else {
-          var authedUser = cleanUser(user[0]);
+          user = user.toJSON();
 
-          request.session.set(request.server.app.sessionName, authedUser);
-          return reply(authedUser);
+          request.session.set(request.server.app.sessionName, user);
+          return reply(user);
         }
     });
   } else {

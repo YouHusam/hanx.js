@@ -95,6 +95,26 @@ var User = {
     },
 
     /**
+     * Remove sensitive data.
+     */
+    toJSON: function () {
+
+      var obj = this.toObject();
+      delete obj.password;
+      delete obj.salt;
+      delete obj.resetPasswordExpires;
+      delete obj.resetPasswordExpires;
+      if (obj.additionalProvidersData) {
+        for (var provider in obj.additionalProvidersData) {
+          delete obj.additionalProvidersData[provider].accessToken;
+        }
+      }
+      if (obj.providerData)
+        delete obj.providerData.accessToken;
+
+      return obj;
+    },
+    /**
      * Create instance method for authenticating user
      */
     authenticate: function (password) {
@@ -103,6 +123,7 @@ var User = {
       return this.password === User.hashPassword(password, this.salt);
     }
   },
+
 
   /**
    * Create instance method for hashing a password

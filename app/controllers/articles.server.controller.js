@@ -4,8 +4,7 @@
  * Module dependencies.
  */
 var Errorhandler   = require('./errors.server.controller'),
-    Boom           = require('boom'),
-    _              = require('lodash');
+    Boom           = require('boom');
 
 /**
  * Create a article
@@ -13,14 +12,21 @@ var Errorhandler   = require('./errors.server.controller'),
 exports.create = function (request, reply) {
 
   var Article = request.collections.article;
+  var user = request.auth.credentials;
   var article = request.payload;
-  article.user = request.auth.credentials.id;
+  article.user = user.id;
 
   Article.create(article, function (err, article) {
 
     if (err) {
       return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
     } else {
+      article.user = {
+        id: user.id,
+        displayName: user.displayName,
+        username: user.username,
+        email: user.email || ''
+      };
       reply(article);
     }
   });
@@ -40,21 +46,28 @@ exports.read = function (request, reply) {
 exports.update = function (request, reply) {
 
   var Article = request.collections.article;
-  Article.update({id: request.pre.article.id}, request.payload,
+  var articleToUpdate = request.pre.article;
+  Article.update({id: articleToUpdate.id}, request.payload,
     function (err, article) {
+
+      article = article[0];
 
       if (err) {
         return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
       } else {
-        Article.findOne(article).populate('user')
-          .exec(function (err, article) {
 
-            if (err) return reply(err);
-            if (!article) {
-              return reply(Boom.notFound('Article not found'));
-            }
-            reply(article);
-          });
+        if (err) return reply(err);
+        if (!article) {
+          return reply(Boom.notFound('Article not found'));
+        }
+        article.user = {
+          id: articleToUpdate.user.id,
+          displayName: articleToUpdate.user.displayName,
+          username: articleToUpdate.user.username,
+          email: articleToUpdate.user.email || ''
+        };
+        reply(article);
+
       }
   });
 };
@@ -89,6 +102,14 @@ exports.list = function (request, reply) {
       if (err) {
         return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
       } else {
+        articles.forEach(function(article){
+          article.user = {
+            id: article.user.id,
+            displayName: article.user.displayName,
+            username: article.user.username,
+            email: article.user.email || ''
+          };
+        });
         reply(articles);
       }
   });
@@ -108,6 +129,12 @@ exports.articleByID = function (request, reply) {
     if (!article) {
       return reply(Boom.notFound('Article not found'));
     }
+    article.user = {
+      id: article.user.id,
+      displayName: article.user.displayName,
+      username: article.user.username,
+      email: article.user.email || ''
+    };
     reply(article);
   });
 };
