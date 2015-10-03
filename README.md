@@ -1,7 +1,7 @@
 ![HANX.JS Logo](https://bytebucket.org/youhusam/hanxjs/raw/1eb2adf1abe8db760e5ec48f52c335b49d92792a/public/modules/core/img/brand/logo.png)
 
 [![Build Status](https://travis-ci.org/YouHusam/hanx.js.svg?branch=master)](https://travis-ci.org/YouHusam/hanx.js)
-[![Dependencies Status](https://david-dm.org/YouHusam/hanx.js)](https://david-dm.org/YouHusam/hanx.js)
+[![Dependency Status](https://david-dm.org/YouHusam/hanx.js.svg)](https://david-dm.org/YouHusam/hanx.js)
 
 HANX.JS is a port of [MEAN.JS](http://meanjs.org) in [Hapi.JS](http://www.hapijs.com/)
 
