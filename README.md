@@ -7,7 +7,7 @@ HANX.JS is a port of [MEAN.JS](http://meanjs.org) in [Hapi.JS](http://www.hapijs
 
 Please note that this is still a work in progress.
 
-HAPI.JS is a full-stack JavaScript open-source solution, which provides a solid starting point for [PostgreSQL](http://www.postgresql.org/), [Node.js](http://www.nodejs.org/), [Hapi](http://hapijs.com/), and [AngularJS](http://angularjs.org/) based applications. The idea is to solve the common issues with connecting those frameworks, build a robust framework to support daily development needs, help developers use better practices while working with popular JavaScript components, and to eliminate the limits of the MEAN stack.
+HANX.JS is a full-stack JavaScript open-source solution, which provides a solid starting point for [PostgreSQL](http://www.postgresql.org/), [Node.js](http://www.nodejs.org/), [Hapi](http://hapijs.com/), and [AngularJS](http://angularjs.org/) based applications. The idea is to solve the common issues with connecting those frameworks, build a robust framework to support daily development needs, help developers use better practices while working with popular JavaScript components, and to eliminate the limits of the MEAN stack.
 
 ## Prerequisites
 Make sure you have installed all of the following prerequisites on your development machine:
@@ -34,7 +34,7 @@ $ psql
 =# GRANT postgres TO hanx;
 ```
 
-## Downloading MEAN.JS
+## Downloading HANX.JS
 There are several ways you can get the HANX.JS boilerplate:
 
 ### Cloning The GitHub Repository
