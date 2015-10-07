@@ -4,7 +4,7 @@ node_js:
 env:
   - NODE_ENV=travis CC=gcc-4.9 CXX=g++-4.9
 services:
-  - mongodb
+  - redis-server
 addons:
   postgresql: "9.4"
   apt:
