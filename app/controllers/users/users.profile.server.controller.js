@@ -6,6 +6,7 @@
 var Boom           = require('boom'),
     Errorhandler   = require('../errors.server.controller.js');
 
+
 /**
  * Update user details
  */
@@ -16,7 +17,7 @@ exports.update = function (request, reply) {
   // Init Variables
   var reqUser = request.auth.credentials;
 
-  // For security measurement we remove the roles from the request.paylad object
+  // For security reasons roles & id are removed from the request.payload object
   delete request.payload.roles;
   delete request.payload.id;
 
@@ -25,8 +26,16 @@ exports.update = function (request, reply) {
       return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
 
     } else {
-      user = user.toJSON();
-      request.session.set(request.server.app.sessionName, user);
+      user = user[0].toJSON();
+
+      request.server.app.authCache.set(request.auth.artifacts.id, user,
+        1000 * 60 * 60 * 24,
+        function (err) {
+
+          if (err) {
+            return reply(Boom.badRequest(err));
+          }
+        });
       return reply(user);
     }
   });
@@ -39,6 +48,6 @@ exports.me = function (request, reply) {
 
   var user = request.auth.credentials;
     reply({
-      user: user.toJSON()
+      user: user
     });
 };

@@ -8,7 +8,8 @@ var Boom           = require('boom'),
     Config         = require('../../../config/config'),
     Nodemailer     = require('nodemailer'),
     Async          = require('async'),
-    Crypto         = require('crypto');
+    Crypto         = require('crypto'),
+    login          = require('./users.authentication.server.controller').login;
 
 var smtpTransport = Nodemailer.createTransport(Config.mailer.options);
 
@@ -152,14 +153,13 @@ exports.reset = function (request, reply) {
                 return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
               } else {
                 // Clear session
-                request.session.clear(request.server.app.sessionName);
+                request.auth.session.clear(request.server.app.sessionName);
 
                 // Copy user and remove sensetive and useless data
                 user = user.toJSON();
                 if(user !== {}){
                   // Create a new session to login the user
-                  request.session.set(request.server.app.sessionName, user);
-                  reply(user);
+                  return login(request, reply, user, reply(user));
                 }
               }
             });
@@ -230,17 +230,17 @@ exports.changePassword = function (request, reply) {
                 } else {
 
                   // Clear session
-                  request.session.clear(request.server.app.sessionName);
+                  request.auth.session.clear(request.server.app.sessionName);
 
                   // Copy user and remove sensitive and useless data
                   user = user[0].toJSON();
 
                   if(user !== {}){
                     // Create a new session to login the user
-                    request.session.set(request.server.app.sessionName, user);
-                    reply({
-                      message: 'Password changed successfully'
-                    });
+                    return login(request, reply, user,
+                      reply({
+                        message: 'Password changed successfully'
+                      }));
                   }
                 }
               });

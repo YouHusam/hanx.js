@@ -16,7 +16,7 @@ var Fs         = require('fs'),
 module.exports = function () {
 
   var serverOptions = {
-    cache:{
+    cache: {
       engine: new Catbox.Client(require('catbox-redis'), {
         host: Config.db.redis.host,
         port: Config.db.redis.port,
@@ -70,6 +70,7 @@ module.exports = function () {
     { register: require('bell') },
     { register: require('inert') },
     { register: require('vision') },
+    { register: require('hapi-auth-cookie') },
     {
       register: Dogwater,
       options: {
@@ -89,19 +90,7 @@ module.exports = function () {
         },
         models: models
       }
-    },
-    {
-      register: require('yar'),
-      options: {
-        name: server.app.sessionName,
-        expiresIn: 1000 * 60 * 60 * 24,
-        cookieOptions: {
-          path: '/',
-          isSecure: process.env.NODE_ENV === 'secure',
-          password: Config.sessionSecret
-        }
-      }
-   }
+    }
   ];
 
   if (Config.log.enabled) {
@@ -149,8 +138,42 @@ module.exports = function () {
       }
     });
 
+    // Setup Cache
+    var authCache = server.cache({
+      segment: server.app.sessionName,
+      expiresIn: 1000 * 60 * 60 * 24
+    });
+    server.app.authCache = authCache;
+
     // Setup the authentication strategies
-    require('./session')(server);
+    server.auth.strategy('session', 'cookie', {
+      cookie: server.app.sessionName,
+      ttl: 1000 * 60 * 60 * 24,
+      path: '/',
+      isSecure: process.env.NODE_ENV === 'secure',
+      password: Config.sessionSecret,
+
+      validateFunc: function (request, session, callback) {
+
+        server.app.authCache.get(session.id, function (err, cached) {
+
+          if (err) {
+            return callback(err, false);
+          }
+
+          if (!cached) {
+            return callback(null, false);
+          }
+
+          if (session.id !== request.state[server.app.sessionName].id) {
+            return callback(null, false);
+          }
+
+          return callback(null, true, cached);
+        });
+      }
+    });
+
     require('./strategies')(server);
 
     // Globbing routing files

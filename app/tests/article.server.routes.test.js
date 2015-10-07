@@ -311,7 +311,7 @@ describe('Article CRUD tests', function () {
         Code.expect(response.statusCode, response.result.message).to.be.equal(401);
         // Set message assertion
 
-        Code.expect(response.result.message).to.be.equal('User is not logged in');
+        Code.expect(response.result.message).to.be.equal('Missing authentication');
 
         // Handle article error error
         done();

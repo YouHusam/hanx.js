@@ -4,7 +4,25 @@
  * Module dependencies.
  */
 var Boom           = require('boom'),
-    ErrorHandler   = require('../errors.server.controller');
+    ErrorHandler   = require('../errors.server.controller'),
+    Uuid           = require('node-uuid');
+
+/**
+ * Create a new session.
+ */
+var login = exports.login = function (request, reply, user, callback) {
+
+  var id = Uuid.v4();
+  request.server.app.authCache.set(id, user, 1000 * 60 * 60 * 24,
+    function (err) {
+
+      if (err) {
+        return reply(Boom.badRequest(err));
+      }
+    });
+  request.auth.session.set({id: id});
+  return callback;
+};
 
 /**
  * Signup
@@ -28,10 +46,8 @@ exports.signup = function (request, reply) {
     if (err) {
       return reply(Boom.badRequest(ErrorHandler.getErrorMessage(err)));
     } else {
-
       user = user.toJSON();
-      request.session.set(request.server.app.sessionName, user);
-      reply(user);
+      return login(request, reply, user, reply(user));
     }
   });
 };
@@ -66,10 +82,9 @@ exports.signin = function (request, reply) {
         return reply(Boom.unauthorized('Username or password are wrong'));
       }
 
-      if(user !== {}){
+      if (user !== {}) {
         user = user.toJSON();
-        request.session.set(request.server.app.sessionName, user);
-        return reply(user);
+        return login(request, reply, user, reply(user));
       }
     });
   } else {
@@ -83,7 +98,7 @@ exports.signin = function (request, reply) {
  */
 exports.signout = function (request, reply) {
 
-  request.session.clear(request.server.app.sessionName);
+  request.auth.session.clear();
   reply.redirect('/');
 };
 
@@ -95,8 +110,7 @@ exports.oauthCallback = function (request, reply) {
   if (!request.auth.isAuthenticated) {
     return reply.redirect('/#!/signin');
   }
-  request.session.set(request.server.app.sessionName, request.pre.user);
-  return reply.redirect('/');
+  return login(request, reply, request.pre.user, reply.redirect('/'));
 };
 
 /**
@@ -106,18 +120,21 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
   var User = request.collections.user;
 
-  if (!request.session.get(request.server.app.sessionName) &&
-      request.auth.isAuthenticated) {
+  if (request.auth.isAuthenticated) {
 
     // Define a search query to find existing user with current provider profile
     var query = 'SELECT * FROM "user" WHERE ('+
-      '"provider" = \'' + providerUserProfile.provider + '\' AND '+
+      '"provider" = \'' + providerUserProfile.provider + '\'' +
+      ' AND ' +
       '"providerData"->>\'' + providerUserProfile.providerIdentifierField + '\' = \'' +
       providerUserProfile.providerData[providerUserProfile.providerIdentifierField] +
-      '\') OR ("additionalProvidersData"#>>\'{' + providerUserProfile.provider + ',' +
+      '\')' +
+      ' OR' +
+      '("additionalProvidersData"#>>\'{' + providerUserProfile.provider + ',' +
       providerUserProfile.providerIdentifierField + '}\' = \''+
       providerUserProfile.providerData[providerUserProfile.providerIdentifierField]+
-      '\') LIMIT 1;';
+      '\')'+
+      ' LIMIT 1;';
 
     User.query(query, function (err, results) {
 
@@ -125,29 +142,33 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
         return done(err);
       } else {
         if (!results.rows[0]) {
-          var possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
+          var possibleUsername = providerUserProfile.username ||
+            (providerUserProfile.email) ?
+              providerUserProfile.email.split('@')[0] :
+              '';
 
-          User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
+          User.findUniqueUsername(possibleUsername, null,
+            function (availableUsername) {
 
-            var user = {
-              firstName: providerUserProfile.firstName,
-              lastName: providerUserProfile.lastName,
-              username: availableUsername,
-              displayName: providerUserProfile.displayName,
-              email: providerUserProfile.email,
-              provider: providerUserProfile.provider,
-              providerData: providerUserProfile.providerData
-            };
+              var user = {
+                firstName: providerUserProfile.firstName,
+                lastName: providerUserProfile.lastName,
+                username: availableUsername,
+                displayName: providerUserProfile.displayName,
+                email: providerUserProfile.email,
+                provider: providerUserProfile.provider,
+                providerData: providerUserProfile.providerData
+              };
 
-            // And save the user
-            User.create(user, function (err, user) {
-              user = user.toJSON();
-              return done(err, user);
-            });
-          });
+              // And save the user
+              User.create(user, function (err, user) {
+                user = user.toJSON();
+                return done(err, user);
+              });
+            }
+          );
         } else {
 
-          // Remove unwanted data from user
           var user = results.rows[0];
 
           // Clean user because
@@ -169,15 +190,20 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
     });
   } else {
     // User is already logged in, join the provider data to the existing user
-    var AuthUser = request.session.get(request.server.app.sessionName);
+    var AuthUser = request.auth.credentials;
     User.findOne({id: AuthUser.id}, function (err, user) {
 
-      // Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
+      // Check if user exists, is not signed in using this provider,
+      // and doesn't have that provider data already configured
       if (user.provider !== providerUserProfile.provider &&
-        (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
+        (!user.additionalProvidersData ||
+        !user.additionalProvidersData[providerUserProfile.provider])) {
         // Add the provider data to the additional provider data field
-        if (!user.additionalProvidersData) AuthUser.additionalProvidersData = {};
-        AuthUser.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
+        if (!user.additionalProvidersData) {
+          AuthUser.additionalProvidersData = {};
+        }
+        AuthUser.additionalProvidersData[providerUserProfile.provider] =
+          providerUserProfile.providerData;
 
         // And save the user
         User.update({id: user.id}, AuthUser, function (err, user) {
@@ -201,7 +227,7 @@ exports.removeOAuthProvider = function (request, reply) {
 
   var User = request.collections.user;
 
-  var user = request.session.get(request.server.app.sessionName);
+  var user = request.auth.credentials;
   var provider = request.query.provider;
 
   if (user && provider) {
@@ -218,8 +244,7 @@ exports.removeOAuthProvider = function (request, reply) {
         } else {
           user = user.toJSON();
 
-          request.session.set(request.server.app.sessionName, user);
-          return reply(user);
+          return login(request, reply, user, reply(user));
         }
     });
   } else {
