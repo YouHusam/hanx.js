@@ -148,7 +148,21 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
         } else {
 
           // Remove unwanted data from user
-          var user = results.rows[0].toJSON();
+          var user = results.rows[0];
+
+          // Clean user because
+          // toJSON() is not available when doing manual queries in Waterline
+          delete user.password;
+          delete user.salt;
+          delete user.resetPasswordExpires;
+          delete user.resetPasswordExpires;
+          if (user.additionalProvidersData) {
+            for (var provider in user.additionalProvidersData) {
+              delete user.additionalProvidersData[provider].accessToken;
+            }
+          }
+          if (user.providerData)
+            delete user.providerData.accessToken;
           return done(err, user);
         }
       }
