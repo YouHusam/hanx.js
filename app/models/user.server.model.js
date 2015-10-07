@@ -103,7 +103,7 @@ var User = {
       delete obj.password;
       delete obj.salt;
       delete obj.resetPasswordExpires;
-      delete obj.resetPasswordExpires;
+      delete obj.resetPasswordToken;
       if (obj.additionalProvidersData) {
         for (var provider in obj.additionalProvidersData) {
           delete obj.additionalProvidersData[provider].accessToken;

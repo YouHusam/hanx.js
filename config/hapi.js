@@ -94,7 +94,7 @@ module.exports = function () {
       register: require('yar'),
       options: {
         name: server.app.sessionName,
-        maxCookieSize: 0, // Use server caching for sessions
+       // maxCookieSize: 0, // Use server caching for sessions
         expiresIn: 1000 * 60 * 60 * 24,
         cookieOptions: {
           path: '/',

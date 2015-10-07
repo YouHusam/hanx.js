@@ -155,7 +155,7 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
           delete user.password;
           delete user.salt;
           delete user.resetPasswordExpires;
-          delete user.resetPasswordExpires;
+          delete user.resetPasswordToken;
           if (user.additionalProvidersData) {
             for (var provider in user.additionalProvidersData) {
               delete user.additionalProvidersData[provider].accessToken;
