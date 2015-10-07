@@ -9,11 +9,12 @@ module.exports = {
       user: process.env.PG_USER || 'hanx',
       password: process.env.PG_PASSWORD || 'password'
     },
-    mongodb: {
-      host: process.env.MONGO_HOST || '127.0.0.1',
-      port: process.env.MONGO_PORT ||  27017,
-      user: process.env.MONGO_USER || '',
-      password: process.env.MONGO_PASSWORD || ''
+    redis: {
+      host: process.env.REDIS_HOST || '127.0.0.1',
+      port: process.env.REDIS_PORT ||  6379,
+      database: process.env.REDIS_DB || '',
+      password: process.env.REDIS_PASSWORD || '',
+      partition: process.env.REDIS_PARTITION || ''
     }
   },
   port: 3001,

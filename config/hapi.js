@@ -17,11 +17,11 @@ module.exports = function () {
 
   var serverOptions = {
     cache:{
-      engine: new Catbox.Client(require('catbox-mongodb'), {
-        host: Config.db.mongodb.host,
-        port: Config.db.mongodb.port,
-        username: Config.db.mongodb.username,
-        password: Config.db.mongodb.password
+      engine: new Catbox.Client(require('catbox-redis'), {
+        host: Config.db.redis.host,
+        port: Config.db.redis.port,
+        database: Config.db.redis.database,
+        password: Config.db.redis.password
       })
     },
     connections: {
