@@ -40,12 +40,11 @@
     "lodash": "~3.10.1",
     "mongodb": "^2.x.x",
     "node-uuid": "^1.4.3",
-    "nodemailer": "~1.5.0",
+    "nodemailer": "^1.5.0",
     "sails-postgresql": "^0.10.16",
     "swig": "~1.4.2",
     "vision": "^3.0.0",
-    "waterline": "^0.10.26",
-    "yar": "^4.2.0"
+    "waterline": "^0.10.26"
   },
   "devDependencies": {
     "code": "~1.5.0",
