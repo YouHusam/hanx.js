@@ -56,6 +56,10 @@ mongod
 *.sln
 *.suo
 
+# IntellJ idea editor
+# =================
+.idea
+
 
 # General
 # =======
