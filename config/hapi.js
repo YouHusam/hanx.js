@@ -81,6 +81,7 @@ module.exports = function () {
         connections: {
           postgreDefault: {
             adapter: 'postgre',
+            poolSize: 1,
             host: Config.db.pg.host,
             port: Config.db.pg.port,
             database: Config.db.pg.database,
