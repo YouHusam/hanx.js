@@ -31,6 +31,7 @@ $ npm install -g grunt-cli
 $ psql
 =# CREATE ROLE hanx WITH PASSWORD 'password' LOGIN;
 =# CREATE DATABASE development;
+=# CREATE DATABASE test;
 =# GRANT postgres TO hanx;
 ```
 
@@ -40,7 +41,7 @@ There are several ways you can get the HANX.JS boilerplate:
 ### Cloning The GitHub Repository
 You can also use Git to directly clone the HANX.JS repository:
 ```bash
-$ git clonehttps://github.com/YouHusam/hanx.js.git
+$ git clone https://github.com/YouHusam/hanx.js.git
 ```
 This will clone the latest version of the HANX.JS repository to a **hanxjs** folder.
 
