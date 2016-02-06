@@ -10,7 +10,7 @@ module.exports = {
   templateEngine: 'swig',
   // The secret should be set to a non-guessable string that
   // is used to compute a session hash
-  sessionSecret: 'HAPI',
+  sessionSecret: 'password-should-be-32-characters',
   // The name of the MongoDB collection to store sessions in
   sessionCollection: 'sessions',
   // The session cookie settings

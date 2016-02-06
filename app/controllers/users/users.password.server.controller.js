@@ -153,7 +153,7 @@ exports.reset = function (request, reply) {
                 return reply(Boom.badRequest(Errorhandler.getErrorMessage(err)));
               } else {
                 // Clear session
-                request.auth.session.clear(request.server.app.sessionName);
+                request.cookieAuth.clear(request.server.app.sessionName);
 
                 // Copy user and remove sensetive and useless data
                 user = user.toJSON();
@@ -230,7 +230,7 @@ exports.changePassword = function (request, reply) {
                 } else {
 
                   // Clear session
-                  request.auth.session.clear(request.server.app.sessionName);
+                  request.cookieAuth.clear(request.server.app.sessionName);
 
                   // Copy user and remove sensitive and useless data
                   user = user[0].toJSON();

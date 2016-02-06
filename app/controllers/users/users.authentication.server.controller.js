@@ -20,7 +20,7 @@ var login = exports.login = function (request, reply, user, callback) {
         return reply(Boom.badRequest(err));
       }
     });
-  request.auth.session.set({id: id});
+  request.cookieAuth.set({id: id});
   return callback;
 };
 
@@ -98,7 +98,7 @@ exports.signin = function (request, reply) {
  */
 exports.signout = function (request, reply) {
 
-  request.auth.session.clear();
+  request.cookieAuth.clear();
   reply.redirect('/');
 };
 
@@ -120,104 +120,110 @@ exports.saveOAuthUserProfile = function (request, providerUserProfile, done) {
 
   var User = request.collections.user;
 
-  if (request.auth.isAuthenticated) {
+  // check if user already logged in
+  request.server.auth.test('session', request, function (err, credentials) {
 
-    // Define a search query to find existing user with current provider profile
-    var query = 'SELECT * FROM "user" WHERE ('+
-      '"provider" = \'' + providerUserProfile.provider + '\'' +
-      ' AND ' +
-      '"providerData"->>\'' + providerUserProfile.providerIdentifierField + '\' = \'' +
-      providerUserProfile.providerData[providerUserProfile.providerIdentifierField] +
-      '\')' +
-      ' OR' +
-      '("additionalProvidersData"#>>\'{' + providerUserProfile.provider + ',' +
-      providerUserProfile.providerIdentifierField + '}\' = \''+
-      providerUserProfile.providerData[providerUserProfile.providerIdentifierField]+
-      '\')'+
-      ' LIMIT 1;';
+    if (request.auth.isAuthenticated && !credentials) {
 
-    User.query(query, function (err, results) {
+      // Define a search query to find existing user with current provider profile
+      var query = 'SELECT * FROM "user" WHERE (' +
+        '"provider" = \'' + providerUserProfile.provider + '\'' +
+        ' AND ' +
+        '"providerData"->>\'' + providerUserProfile.providerIdentifierField + '\' = \'' +
+        providerUserProfile.providerData[providerUserProfile.providerIdentifierField] +
+        '\')' +
+        ' OR' +
+        '("additionalProvidersData"#>>\'{' + providerUserProfile.provider + ',' +
+        providerUserProfile.providerIdentifierField + '}\' = \'' +
+        providerUserProfile.providerData[providerUserProfile.providerIdentifierField] +
+        '\')' +
+        ' LIMIT 1;';
 
-      if (err) {
-        return done(err);
-      } else {
-        if (!results.rows[0]) {
-          var possibleUsername = providerUserProfile.username ||
-            (providerUserProfile.email) ?
-              providerUserProfile.email.split('@')[0] :
-              '';
+      User.query(query, function (err, results) {
 
-          User.findUniqueUsername(possibleUsername, null,
-            function (availableUsername) {
-
-              var user = {
-                firstName: providerUserProfile.firstName,
-                lastName: providerUserProfile.lastName,
-                username: availableUsername,
-                displayName: providerUserProfile.displayName,
-                email: providerUserProfile.email,
-                provider: providerUserProfile.provider,
-                providerData: providerUserProfile.providerData
-              };
-
-              // And save the user
-              User.create(user, function (err, user) {
-                user = user.toJSON();
-                return done(err, user);
-              });
-            }
-          );
+        if (err) {
+          return done(err);
         } else {
+          if (!results.rows[0]) {
+            var possibleUsername = providerUserProfile.username ?
+              providerUserProfile.username :
+              (providerUserProfile.email) ?
+                providerUserProfile.email.split('@')[0] :
+                '';
 
-          var user = results.rows[0];
+            User.findUniqueUsername(possibleUsername, null,
+              function (availableUsername) {
 
-          // Clean user because
-          // toJSON() is not available when doing manual queries in Waterline
-          delete user.password;
-          delete user.salt;
-          delete user.resetPasswordExpires;
-          delete user.resetPasswordToken;
-          if (user.additionalProvidersData) {
-            for (var provider in user.additionalProvidersData) {
-              delete user.additionalProvidersData[provider].accessToken;
+                var user = {
+                  firstName: providerUserProfile.firstName,
+                  lastName: providerUserProfile.lastName,
+                  username: availableUsername,
+                  displayName: providerUserProfile.displayName,
+                  email: providerUserProfile.email,
+                  provider: providerUserProfile.provider,
+                  providerData: providerUserProfile.providerData
+                };
+
+                // And save the user
+                User.create(user, function (err, user) {
+                  user = user.toJSON();
+                  return done(err, user);
+                });
+              }
+            );
+          } else {
+
+            var user = results.rows[0];
+
+            // Clean user because
+            // toJSON() is not available when doing manual queries in Waterline
+            delete user.password;
+            delete user.salt;
+            delete user.resetPasswordExpires;
+            delete user.resetPasswordToken;
+            if (user.additionalProvidersData) {
+              for (var provider in user.additionalProvidersData) {
+                delete user.additionalProvidersData[provider].accessToken;
+              }
             }
+            if (user.providerData)
+              delete user.providerData.accessToken;
+            return done(err, user);
           }
-          if (user.providerData)
-            delete user.providerData.accessToken;
-          return done(err, user);
         }
-      }
-    });
-  } else {
-    // User is already logged in, join the provider data to the existing user
-    var AuthUser = request.auth.credentials;
-    User.findOne({id: AuthUser.id}, function (err, user) {
+      });
+    } else {
+      // User is already logged in, join the provider data to the existing user
+      var AuthUser = credentials;
+      User.findOne({id: AuthUser.id}, function (err, user) {
 
-      // Check if user exists, is not signed in using this provider,
-      // and doesn't have that provider data already configured
-      if (user.provider !== providerUserProfile.provider &&
-        (!user.additionalProvidersData ||
-        !user.additionalProvidersData[providerUserProfile.provider])) {
-        // Add the provider data to the additional provider data field
-        if (!user.additionalProvidersData) {
-          AuthUser.additionalProvidersData = {};
-        }
-        AuthUser.additionalProvidersData[providerUserProfile.provider] =
-          providerUserProfile.providerData;
+        // Check if user exists, is not signed in using this provider,
+        // and doesn't have that provider data already configured
+        if (user.provider !== providerUserProfile.provider &&
+          (!user.additionalProvidersData ||
+            !user.additionalProvidersData[providerUserProfile.provider])) {
+          // Add the provider data to the additional provider data field
+          if (!user.additionalProvidersData) {
+            AuthUser.additionalProvidersData = {};
+          }
+          AuthUser.additionalProvidersData[providerUserProfile.provider] =
+            providerUserProfile.providerData;
 
-        // And save the user
-        User.update({id: user.id}, AuthUser, function (err, user) {
+          // And save the user
+          User.update({id: user.id}, AuthUser, function (err, users) {
 
+            user = users[0].toJSON();
+            return done(err, user, '/#!/settings/accounts');
+          });
+        } else {
           user = user.toJSON();
-          return done(err, user, '/#!/settings/accounts');
-        });
-      } else {
-        user = user.toJSON();
-        return done(user);
-      }
-    });
+          return done(user);
+        }
+      });
 
-  }
+    }
+  });
+
 };
 
 /**
@@ -237,16 +243,16 @@ exports.removeOAuthProvider = function (request, reply) {
     }
 
     User.update({id: user.id}, user)
-      .exec(function (err, user) {
+      .exec(function (err, users) {
 
         if (err) {
           return reply(Boom.badRequest(ErrorHandler.getErrorMessage(err)));
         } else {
-          user = user.toJSON();
+          user = users[0].toJSON();
 
           return login(request, reply, user, reply(user));
         }
-    });
+      });
   } else {
     return reply(Boom.badRequest('Invalid provider'));
   }

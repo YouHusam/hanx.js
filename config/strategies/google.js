@@ -32,10 +32,10 @@ exports.preGoogle = function (request, reply) {
 
   // Create the user OAuth profile
   var providerUserProfile = {
-    firstName: profile.raw.given_name,
-    lastName: profile.raw.family_name,
+    firstName: profile.raw.name.givenName,
+    lastName: profile.raw.name.familyName,
     displayName: profile.displayName,
-    email: profile.email,
+    email: profile.emails[0].value,
     username: profile.username,
     provider: 'google',
     providerIdentifierField: 'id',
