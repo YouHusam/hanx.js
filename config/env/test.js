@@ -5,6 +5,7 @@ module.exports = {
     pg: {
       host: process.env.PG_HOST || 'localhost',
       port: process.env.PG_PORT ||  5432,
+      pollSize: process.env.PG_POLL_SIZE || 1,
       database: process.env.PG_DB || 'test',
       user: process.env.PG_USER || 'hanx',
       password: process.env.PG_PASSWORD || 'password'
