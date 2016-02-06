@@ -41,7 +41,7 @@ exports.signup = function (request, reply) {
   user.displayName = user.firstName + ' ' + user.lastName;
 
   // Then save the user
-  User.create(user, function (err) {
+  User.create(user, function (err, user) {
 
     if (err) {
       return reply(Boom.badRequest(ErrorHandler.getErrorMessage(err)));
