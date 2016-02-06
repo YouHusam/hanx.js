@@ -1,7 +1,7 @@
 {
   "name": "hankjs",
   "description": "Full-Stack JavaScript with PostgreSQL, hapi, AngularJS, and Node.js.",
-  "version": "0.8.1",
+  "version": "0.8.9",
   "private": false,
   "author": "https://github.org/youhusam/",
   "license": "SEE LICENSE IN license.md",
