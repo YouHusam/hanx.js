@@ -1,3 +1,7 @@
+# This is no longer maintained. 
+### Sorry for the inconvenience.
+
+
 ![HANX.JS Logo](https://bytebucket.org/youhusam/hanxjs/raw/1eb2adf1abe8db760e5ec48f52c335b49d92792a/public/modules/core/img/brand/logo.png)
 
 [![Build Status](https://travis-ci.org/YouHusam/hanx.js.svg?branch=master)](https://travis-ci.org/YouHusam/hanx.js)
